@@ -19,11 +19,16 @@ export function useSiteConfig() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Initialiser Supabase uniquement côté client
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ""
-    );
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      setError(new Error("Missing Supabase configuration"));
+      setLoading(false);
+      return;
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const loadConfig = async () => {
       try {
