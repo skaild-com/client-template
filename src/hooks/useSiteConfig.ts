@@ -31,6 +31,11 @@ export function useSiteConfig() {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
+    // Vérifier si on est côté client
+    if (typeof window === "undefined") {
+      return;
+    }
+
     const loadConfig = async () => {
       try {
         console.log("1. Début du chargement...");
