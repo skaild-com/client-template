@@ -28,14 +28,36 @@ export function useSiteConfig() {
       if (!isSubscribed) return;
 
       try {
-        console.log("=== DEBUG SITE CONFIG ===");
-        const hostname = window.location.hostname;
-        console.log("Hostname:", hostname);
+        // Afficher les informations de debug dans le DOM
+        const debugInfo = document.createElement("div");
+        debugInfo.style.position = "fixed";
+        debugInfo.style.bottom = "0";
+        debugInfo.style.left = "0";
+        debugInfo.style.padding = "1rem";
+        debugInfo.style.background = "rgba(0,0,0,0.8)";
+        debugInfo.style.color = "white";
+        debugInfo.style.zIndex = "9999";
+        debugInfo.style.maxHeight = "200px";
+        debugInfo.style.overflowY = "auto";
 
+        const hostname = window.location.hostname;
         const domain =
           hostname === "localhost"
             ? "test-business.skaild.com"
             : `${hostname.split(".")[0]}.skaild.com`;
+
+        debugInfo.innerHTML = `
+          <div>
+            <p>Hostname: ${hostname}</p>
+            <p>Domain: ${domain}</p>
+            <p>Supabase URL exists: ${!!process.env
+              .NEXT_PUBLIC_SUPABASE_URL}</p>
+            <p>Supabase Key exists: ${!!process.env
+              .NEXT_PUBLIC_SUPABASE_ANON_KEY}</p>
+          </div>
+        `;
+
+        document.body.appendChild(debugInfo);
 
         const { data: site, error: siteError } = await supabase
           .from("sites")
@@ -49,21 +71,36 @@ export function useSiteConfig() {
           .single();
 
         if (siteError) {
-          console.error("Supabase error:", siteError);
+          debugInfo.innerHTML += `<p style="color: red">Supabase Error: ${siteError.message}</p>`;
           throw new Error(`Failed to load site config: ${siteError.message}`);
         }
 
         if (!site) {
+          debugInfo.innerHTML += `<p style="color: orange">No site found for domain: ${domain}</p>`;
           throw new Error("No site configuration found");
         }
 
-        console.log("Site loaded successfully:", site);
+        debugInfo.innerHTML += `<p style="color: green">Site loaded successfully</p>`;
+
         if (isSubscribed) {
           setConfig(site);
           setError(null);
         }
       } catch (err) {
-        console.error("Error loading config:", err);
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        // Afficher l'erreur dans le DOM
+        const errorDiv = document.createElement("div");
+        errorDiv.style.position = "fixed";
+        errorDiv.style.top = "0";
+        errorDiv.style.left = "0";
+        errorDiv.style.right = "0";
+        errorDiv.style.padding = "1rem";
+        errorDiv.style.background = "red";
+        errorDiv.style.color = "white";
+        errorDiv.style.zIndex = "9999";
+        errorDiv.textContent = `Error: ${errorMessage}`;
+        document.body.appendChild(errorDiv);
+
         if (isSubscribed) {
           setError(err instanceof Error ? err : new Error(String(err)));
           setConfig(null);

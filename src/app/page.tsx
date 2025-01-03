@@ -6,9 +6,26 @@ import { ThemeProvider } from "./components/ThemeProvider";
 export default function HomePage() {
   const { config, loading, error } = useSiteConfig();
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error loading site configuration</div>;
-  if (!config) return <div>Site not found</div>;
+  if (loading) return <div className="p-4">Loading...</div>;
+  if (error)
+    return (
+      <div className="p-4 text-red-500">
+        <h2>Error loading site configuration:</h2>
+        <pre className="mt-4 p-4 bg-gray-100 rounded-lg overflow-auto">
+          {error.message}
+        </pre>
+      </div>
+    );
+  if (!config)
+    return (
+      <div className="p-4 text-orange-500">
+        <h2>Site not found</h2>
+        <p>
+          Domain:{" "}
+          {typeof window !== "undefined" ? window.location.hostname : "N/A"}
+        </p>
+      </div>
+    );
 
   return (
     <ThemeProvider config={config}>
