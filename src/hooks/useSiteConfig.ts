@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import {
+  createClient,
+  RealtimePostgresChangesPayload,
+} from "@supabase/supabase-js";
 import { SiteConfig } from "@/app/config/types";
 
 // Vérification des variables d'environnement
@@ -16,6 +19,11 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ""
 );
+
+// Définir le type pour les changements Postgres
+type PostgresChanges = RealtimePostgresChangesPayload<{
+  [key: string]: unknown;
+}>;
 
 export function useSiteConfig() {
   const [config, setConfig] = useState<SiteConfig | null>(null);
@@ -160,7 +168,7 @@ export function useSiteConfig() {
     // Écouter les changements en temps réel
     const subscription = supabase
       .channel("sites")
-      .on(
+      .on<PostgresChanges>(
         "postgres_changes",
         {
           event: "*",
@@ -170,8 +178,12 @@ export function useSiteConfig() {
         (payload) => {
           const hostname = window.location.hostname;
           const subdomain = hostname.split(".")[0];
-          if (payload.new && payload.new.domain === `${subdomain}.skaild.com`) {
-            setConfig(payload.new as SiteConfig);
+          if (
+            payload.new &&
+            "domain" in payload.new &&
+            payload.new.domain === `${subdomain}.skaild.com`
+          ) {
+            loadConfig();
           }
         }
       )
@@ -180,7 +192,7 @@ export function useSiteConfig() {
     // Écouter les changements sur les services
     const servicesSubscription = supabase
       .channel("services")
-      .on(
+      .on<PostgresChanges>(
         "postgres_changes",
         {
           event: "*",
@@ -188,7 +200,6 @@ export function useSiteConfig() {
           table: "services",
         },
         async () => {
-          // Recharger la configuration complète
           loadConfig();
         }
       )
@@ -197,7 +208,7 @@ export function useSiteConfig() {
     // Écouter les changements sur les features
     const featuresSubscription = supabase
       .channel("features")
-      .on(
+      .on<PostgresChanges>(
         "postgres_changes",
         {
           event: "*",
@@ -205,7 +216,6 @@ export function useSiteConfig() {
           table: "features",
         },
         async () => {
-          // Recharger la configuration complète
           loadConfig();
         }
       )
