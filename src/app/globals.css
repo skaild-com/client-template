@@ -7,20 +7,42 @@
   --secondary: #0284c7;
   --accent: #f59e0b;
   --background: #ffffff;
-  --foreground: #0f172a;
+  --text: #0f172a;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a;
-    --foreground: #f8fafc;
-    --primary: #3b82f6;
-    --secondary: #0ea5e9;
+@layer components {
+  .btn {
+    @apply font-medium transition-colors duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-primary text-white;
+  }
+
+  .btn-primary:hover {
+    @apply bg-opacity-90;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-primary;
+  }
+
+  .btn-secondary:hover {
+    @apply bg-gray-100;
+  }
+
+  .section {
+    @apply py-20;
+  }
+
+  .container {
+    @apply mx-auto px-4;
   }
 }
 
+/* Styles spécifiques au thème */
 body {
-  color: var(--foreground);
+  color: var(--text);
   background: var(--background);
 }
 
