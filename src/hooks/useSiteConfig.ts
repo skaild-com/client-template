@@ -1,15 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  createClient,
-  RealtimePostgresChangesPayload,
-} from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { SiteConfig } from "@/app/config/types";
-
-type PostgresChanges = RealtimePostgresChangesPayload<{
-  [key: string]: unknown;
-}>;
 
 export function useSiteConfig() {
   const [config, setConfig] = useState<SiteConfig | null>(null);
@@ -29,19 +22,21 @@ export function useSiteConfig() {
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey);
+    let isSubscribed = true;
 
     const loadConfig = async () => {
+      if (!isSubscribed) return;
+
       try {
-        console.log("1. Début du chargement...");
-
+        console.log("=== DEBUG SITE CONFIG ===");
         const hostname = window.location.hostname;
-        const subdomain = hostname.split(".")[0];
-
-        // Ajout de logs pour déboguer
         console.log("Hostname:", hostname);
-        console.log("Subdomain:", subdomain);
 
-        // Chercher avec les deux domaines possibles
+        const domain =
+          hostname === "localhost"
+            ? "test-business.skaild.com"
+            : `${hostname.split(".")[0]}.skaild.com`;
+
         const { data: site, error: siteError } = await supabase
           .from("sites")
           .select(
@@ -50,201 +45,50 @@ export function useSiteConfig() {
             business_profiles (*)
           `
           )
-          .or(
-            `domain.eq.${subdomain}.skaild.com,domain.eq.${subdomain}.vercel.app`
-          )
+          .eq("domain", domain)
           .single();
-
-        // Log la requête complète
-        console.log(
-          "Query:",
-          `domain.eq.${subdomain}.skaild.com,domain.eq.${subdomain}.vercel.app`
-        );
-        console.log("Site data:", site);
-        console.log("Site error:", siteError);
 
         if (siteError) {
           console.error("Supabase error:", siteError);
-          throw siteError;
+          throw new Error(`Failed to load site config: ${siteError.message}`);
         }
 
-        console.log("2. Site data:", site);
-        console.log("2. Site data brut:", {
-          id: site.id,
-          business_profiles: site.business_profiles,
-          content: JSON.stringify(site.content, null, 2),
-          theme_config: JSON.stringify(site.theme_config, null, 2),
-        });
+        if (!site) {
+          throw new Error("No site configuration found");
+        }
 
-        console.log(
-          "Site content brut:",
-          JSON.stringify(site.content, null, 2)
-        );
-        console.log(
-          "Site theme brut:",
-          JSON.stringify(site.theme_config, null, 2)
-        );
-
-        // Récupération des services
-        const { data: services, error: servicesError } = await supabase
-          .from("services")
-          .select("*")
-          .eq("site_id", site.id);
-
-        console.log("3. Services:", services);
-        if (servicesError) throw servicesError;
-
-        console.log("3. Services bruts:", JSON.stringify(services, null, 2));
-
-        // Récupération des features
-        const { data: features, error: featuresError } = await supabase
-          .from("features")
-          .select("*")
-          .eq("site_id", site.id);
-
-        console.log("4. Features:", features);
-        if (featuresError) throw featuresError;
-
-        console.log("4. Features brutes:", JSON.stringify(features, null, 2));
-
-        console.log("Raw site content:", site.content);
-        console.log("Raw theme config:", site.theme_config);
-
-        // Transformer les données pour correspondre à l'interface SiteConfig
-        const transformedConfig: SiteConfig = {
-          id: site.id,
-          business: {
-            name: site.business_profiles.name,
-            phone: site.business_profiles.phone,
-            email: site.business_profiles.email,
-            address: {
-              street: site.business_profiles.street || "",
-              city: site.business_profiles.city || "",
-              state: site.business_profiles.state || "",
-              zip: site.business_profiles.zip || "",
-            },
-            hours: site.business_profiles.hours || {
-              weekdays: "9:00 AM - 5:00 PM",
-              weekends: "Closed",
-            },
-          },
-          theme: {
-            colors: {
-              primary: site.theme_config?.colors?.primary || "#0891b2",
-              secondary: site.theme_config?.colors?.secondary || "#0369a1",
-              accent: site.theme_config?.colors?.accent || "#ea580c",
-              background: site.theme_config?.colors?.background || "#f8fafc",
-              text: site.theme_config?.colors?.text || "#1e293b",
-            },
-            style: {
-              buttonRadius: site.theme_config?.style?.buttonRadius || "pill",
-              headerStyle: site.theme_config?.style?.headerStyle || "prominent",
-              layout: site.theme_config?.style?.layout || "boxed",
-            },
-          },
-          content: {
-            hero: {
-              title: site.content?.hero?.title ?? "Your Trusted Local Plumbers",
-              subtitle:
-                site.content?.hero?.subtitle ??
-                "Fast, reliable service when you need it most",
-              cta: {
-                primary: site.content?.hero?.cta?.primary ?? "Emergency Call",
-                secondary: site.content?.hero?.cta?.secondary ?? "Get Quote",
-              },
-            },
-            services: services.map((s) => ({
-              title: s.name,
-              description: s.description,
-              icon: s.icon || "🔧",
-            })),
-            features: features.map((f) => ({
-              title: f.title,
-              description: f.description,
-              icon: f.icon || "✨",
-            })),
-          },
-        };
-
-        console.log(
-          "Final transformed config:",
-          JSON.stringify(transformedConfig, null, 2)
-        );
-        setConfig(transformedConfig);
-      } catch (e) {
-        console.error("Error details:", e);
-        setError(e as Error);
+        console.log("Site loaded successfully:", site);
+        if (isSubscribed) {
+          setConfig(site);
+          setError(null);
+        }
+      } catch (err) {
+        console.error("Error loading config:", err);
+        if (isSubscribed) {
+          setError(err instanceof Error ? err : new Error(String(err)));
+          setConfig(null);
+        }
       } finally {
-        setLoading(false);
+        if (isSubscribed) {
+          setLoading(false);
+        }
       }
     };
 
     loadConfig();
 
-    // Écouter les changements en temps réel
     const subscription = supabase
       .channel("sites")
-      .on<PostgresChanges>(
+      .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "sites",
-        },
-        (payload) => {
-          const hostname = window.location.hostname;
-          const subdomain = hostname.split(".")[0];
-          const domain = hostname.includes("vercel.app")
-            ? `${subdomain}.vercel.app`
-            : `${subdomain}.skaild.com`;
-
-          if (
-            payload.new &&
-            "domain" in payload.new &&
-            payload.new.domain === domain
-          ) {
-            loadConfig();
-          }
-        }
-      )
-      .subscribe();
-
-    // Écouter les changements sur les services
-    const servicesSubscription = supabase
-      .channel("services")
-      .on<PostgresChanges>(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "services",
-        },
-        async () => {
-          loadConfig();
-        }
-      )
-      .subscribe();
-
-    // Écouter les changements sur les features
-    const featuresSubscription = supabase
-      .channel("features")
-      .on<PostgresChanges>(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "features",
-        },
-        async () => {
-          loadConfig();
-        }
+        { event: "*", schema: "public", table: "sites" },
+        loadConfig
       )
       .subscribe();
 
     return () => {
+      isSubscribed = false;
       subscription.unsubscribe();
-      servicesSubscription.unsubscribe();
-      featuresSubscription.unsubscribe();
     };
   }, []);
 
