@@ -36,13 +36,12 @@ export function useSiteConfig() {
 
         const hostname = window.location.hostname;
         const subdomain = hostname.split(".")[0];
-        const domain = hostname.includes("vercel.app")
-          ? `${subdomain}.vercel.app`
-          : `${subdomain}.skaild.com`;
 
-        console.log("Domain recherché:", domain);
+        // Ajout de logs pour déboguer
+        console.log("Hostname:", hostname);
+        console.log("Subdomain:", subdomain);
 
-        // Récupération du site
+        // Chercher avec les deux domaines possibles
         const { data: site, error: siteError } = await supabase
           .from("sites")
           .select(
@@ -56,9 +55,18 @@ export function useSiteConfig() {
           )
           .single();
 
-        console.log("Résultat de la requête:", { site, error: siteError });
+        // Log la requête complète
+        console.log(
+          "Query:",
+          `domain.eq.${subdomain}.skaild.com,domain.eq.${subdomain}.vercel.app`
+        );
+        console.log("Site data:", site);
+        console.log("Site error:", siteError);
 
-        if (siteError) throw siteError;
+        if (siteError) {
+          console.error("Supabase error:", siteError);
+          throw siteError;
+        }
 
         console.log("2. Site data:", site);
         console.log("2. Site data brut:", {
