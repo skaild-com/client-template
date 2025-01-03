@@ -51,7 +51,9 @@ export function useSiteConfig() {
             business_profiles (*)
           `
           )
-          .eq("domain", domain)
+          .or(
+            `domain.eq.${subdomain}.skaild.com,domain.eq.${subdomain}.vercel.app`
+          )
           .single();
 
         console.log("Résultat de la requête:", { site, error: siteError });
