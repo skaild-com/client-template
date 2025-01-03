@@ -123,7 +123,7 @@ export function useSiteConfig() {
 
         // Test de connexion Supabase
         try {
-          const { data: testData, error: testError } = await supabase
+          const { error: testError } = await supabase
             .from("sites")
             .select("count")
             .limit(1);
