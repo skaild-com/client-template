@@ -7,20 +7,6 @@ import {
 } from "@supabase/supabase-js";
 import { SiteConfig } from "@/app/config/types";
 
-// Vérification des variables d'environnement
-if (
-  !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-) {
-  console.error("Missing Supabase environment variables");
-}
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ""
-);
-
-// Définir le type pour les changements Postgres
 type PostgresChanges = RealtimePostgresChangesPayload<{
   [key: string]: unknown;
 }>;
@@ -31,10 +17,13 @@ export function useSiteConfig() {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // Vérifier si on est côté client
-    if (typeof window === "undefined") {
-      return;
-    }
+    if (typeof window === "undefined") return;
+
+    // Initialiser Supabase uniquement côté client
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? ""
+    );
 
     const loadConfig = async () => {
       try {
