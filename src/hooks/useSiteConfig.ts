@@ -105,8 +105,11 @@ export function useSiteConfig() {
         const hostname = window.location.hostname;
         const domain =
           hostname === "localhost"
-            ? "test-business.skaild.com"
+            ? "plumber.skaild.com"
             : `${hostname.split(".")[0]}.skaild.com`;
+
+        console.log("Hostname:", hostname);
+        console.log("Domain utilisé:", domain);
 
         debugInfo.innerHTML = `
           <div>
@@ -145,6 +148,12 @@ export function useSiteConfig() {
           .select("*, business_profiles(*)")
           .eq("domain", domain);
 
+        console.log("Données reçues de Supabase:", {
+          domain,
+          sites,
+          businessProfile: sites?.[0]?.business_profiles,
+        });
+
         if (siteError) {
           debugInfo.innerHTML += `<p style="color: red">Error: ${siteError.message}</p>`;
           throw siteError;
@@ -165,7 +174,36 @@ export function useSiteConfig() {
         } else {
           const site = sites[0];
           debugInfo.innerHTML += `<p style="color: green">Site loaded successfully (ID: ${site.id})</p>`;
-          setConfig(site);
+
+          // Transformation des données reçues
+          const formattedConfig: SiteConfig = {
+            id: site.id,
+            business: {
+              name: site.business_profiles?.name || "Business Name",
+              phone:
+                site.business_profiles?.phone || "Contact number not available",
+              email: site.business_profiles?.email || "Email not available",
+              address: site.business_profiles?.address || {
+                street: "Street Address",
+                city: "City",
+                state: "State",
+                zip: "ZIP",
+              },
+              hours: site.business_profiles?.hours || {
+                weekdays: "9:00 AM - 5:00 PM",
+                weekends: "Closed",
+              },
+            },
+            theme: {
+              colors: site.theme_config?.colors || defaultConfig.theme.colors,
+              style: site.theme_config?.style || defaultConfig.theme.style,
+            },
+            content: site.content || defaultConfig.content,
+          };
+
+          console.log("Configuration formatée:", formattedConfig);
+
+          setConfig(formattedConfig);
           setError(null);
         }
       } catch (err) {
