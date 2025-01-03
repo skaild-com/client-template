@@ -34,8 +34,13 @@ export function useSiteConfig() {
       try {
         console.log("1. Début du chargement...");
 
-        // Vérification de l'URL de Supabase
-        console.log("URL Supabase:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+        const hostname = window.location.hostname;
+        const subdomain = hostname.split(".")[0];
+        const domain = hostname.includes("vercel.app")
+          ? `${subdomain}.vercel.app`
+          : `${subdomain}.skaild.com`;
+
+        console.log("Domain recherché:", domain);
 
         // Récupération du site
         const { data: site, error: siteError } = await supabase
@@ -46,12 +51,14 @@ export function useSiteConfig() {
             business_profiles (*)
           `
           )
-          .eq("domain", "plumber.skaild.com")
+          .eq("domain", domain)
           .single();
 
-        console.log("2. Site data:", site);
+        console.log("Résultat de la requête:", { site, error: siteError });
+
         if (siteError) throw siteError;
 
+        console.log("2. Site data:", site);
         console.log("2. Site data brut:", {
           id: site.id,
           business_profiles: site.business_profiles,
@@ -177,10 +184,14 @@ export function useSiteConfig() {
         (payload) => {
           const hostname = window.location.hostname;
           const subdomain = hostname.split(".")[0];
+          const domain = hostname.includes("vercel.app")
+            ? `${subdomain}.vercel.app`
+            : `${subdomain}.skaild.com`;
+
           if (
             payload.new &&
             "domain" in payload.new &&
-            payload.new.domain === `${subdomain}.skaild.com`
+            payload.new.domain === domain
           ) {
             loadConfig();
           }
