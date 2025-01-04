@@ -91,6 +91,8 @@ export function useSiteConfig() {
       if (!isSubscribed) return;
 
       try {
+        // Debug element creation (commented out but preserved)
+        /*
         const debugInfo = document.createElement("div");
         debugInfo.style.position = "fixed";
         debugInfo.style.bottom = "0";
@@ -101,6 +103,7 @@ export function useSiteConfig() {
         debugInfo.style.zIndex = "9999";
         debugInfo.style.maxHeight = "200px";
         debugInfo.style.overflowY = "auto";
+        */
 
         const hostname = window.location.hostname;
         const domain =
@@ -111,6 +114,7 @@ export function useSiteConfig() {
         console.log("Hostname:", hostname);
         console.log("Domain utilisé:", domain);
 
+        /*
         debugInfo.innerHTML = `
           <div>
             <p>Hostname: ${hostname}</p>
@@ -123,6 +127,7 @@ export function useSiteConfig() {
         `;
 
         document.body.appendChild(debugInfo);
+        */
 
         // Test de connexion Supabase
         try {
@@ -132,50 +137,41 @@ export function useSiteConfig() {
             .limit(1);
 
           if (testError) {
-            debugInfo.innerHTML += `<p style="color: red">Erreur de connexion Supabase: ${testError.message}</p>`;
+            // debugInfo.innerHTML += `<p style="color: red">Erreur de connexion Supabase: ${testError.message}</p>`;
             throw testError;
           }
 
-          debugInfo.innerHTML += `<p style="color: green">Connexion Supabase OK</p>`;
+          // debugInfo.innerHTML += `<p style="color: green">Connexion Supabase OK</p>`;
         } catch (testErr) {
-          debugInfo.innerHTML += `<p style="color: red">Erreur test Supabase: ${testErr}</p>`;
+          // debugInfo.innerHTML += `<p style="color: red">Erreur test Supabase: ${testErr}</p>`;
           throw testErr;
         }
 
-        // Requête principale
         const { data: sites, error: siteError } = await supabase
           .from("sites")
           .select("*, business_profiles(*)")
           .eq("domain", domain);
 
-        console.log("Données reçues de Supabase:", {
-          domain,
-          sites,
-          businessProfile: sites?.[0]?.business_profiles,
-        });
-
         if (siteError) {
-          debugInfo.innerHTML += `<p style="color: red">Error: ${siteError.message}</p>`;
+          // debugInfo.innerHTML += `<p style="color: red">Error: ${siteError.message}</p>`;
           throw siteError;
         }
 
-        // Vérifier si nous avons des résultats
         if (!sites || sites.length === 0) {
           if (process.env.NODE_ENV === "development") {
-            debugInfo.innerHTML += `<p style="color: yellow">Using default configuration for development</p>`;
+            // debugInfo.innerHTML += `<p style="color: yellow">Using default configuration for development</p>`;
             setConfig(defaultConfig);
             setError(null);
           } else {
-            debugInfo.innerHTML += `<p style="color: orange">No site found for domain: ${domain}</p>`;
+            // debugInfo.innerHTML += `<p style="color: orange">No site found for domain: ${domain}</p>`;
             throw new Error(
               `No site configuration found for domain: ${domain}`
             );
           }
         } else {
           const site = sites[0];
-          debugInfo.innerHTML += `<p style="color: green">Site loaded successfully (ID: ${site.id})</p>`;
+          // debugInfo.innerHTML += `<p style="color: green">Site loaded successfully (ID: ${site.id})</p>`;
 
-          // Transformation des données reçues
           const formattedConfig: SiteConfig = {
             id: site.id,
             business: {
