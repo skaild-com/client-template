@@ -5,10 +5,9 @@ import { fileURLToPath } from "url";
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
 function loadEnvFile() {
-  const envPath = join(__dirname, "../.env");
+  const envPath = join(__dirname, "../.env.local");
   if (!existsSync(envPath)) {
-    console.error("❌ Fichier .env manquant");
-    console.error("Copiez .env.example vers .env et ajoutez votre clé OpenAI");
+    console.error("❌ Fichier .env.local manquant");
     process.exit(1);
   }
 
@@ -22,30 +21,10 @@ function loadEnvFile() {
 }
 
 function verifyEnv() {
-  // Vérifier la clé OpenAI dans .env
+  // Vérifier la clé OpenAI dans .env.local
   const env = loadEnvFile();
   if (!env.OPENAI_API_KEY) {
-    console.error("❌ OPENAI_API_KEY manquante dans .env");
-    process.exit(1);
-  }
-
-  // Vérifier les variables Supabase dans vercel.json
-  const vercelConfig = JSON.parse(
-    readFileSync(join(__dirname, "../vercel.json"), "utf8")
-  );
-
-  const supabaseVars = [
-    "NEXT_PUBLIC_SUPABASE_URL",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-  ];
-
-  const missingVars = supabaseVars.filter(
-    (varName) => !vercelConfig.env[varName]
-  );
-
-  if (missingVars.length > 0) {
-    console.error("❌ Variables Supabase manquantes dans vercel.json:");
-    missingVars.forEach((varName) => console.error(`   - ${varName}`));
+    console.error("❌ OPENAI_API_KEY manquante dans .env.local");
     process.exit(1);
   }
 
