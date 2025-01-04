@@ -1,13 +1,22 @@
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { fileURLToPath } from "url";
+import { createRequire } from "module";
 
+const require = createRequire(import.meta.url);
+const vercelConfig = require("../vercel.json");
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
 function loadEnvFile() {
+  // Vérifier d'abord vercel.json
+  if (vercelConfig.env?.OPENAI_API_KEY) {
+    return { OPENAI_API_KEY: vercelConfig.env.OPENAI_API_KEY };
+  }
+
+  // Sinon vérifier .env.local
   const envPath = join(__dirname, "../.env.local");
   if (!existsSync(envPath)) {
-    console.error("❌ Fichier .env.local manquant");
+    console.error("❌ OPENAI_API_KEY manquante dans vercel.json et .env.local");
     process.exit(1);
   }
 
@@ -21,10 +30,9 @@ function loadEnvFile() {
 }
 
 function verifyEnv() {
-  // Vérifier la clé OpenAI dans .env.local
   const env = loadEnvFile();
   if (!env.OPENAI_API_KEY) {
-    console.error("❌ OPENAI_API_KEY manquante dans .env.local");
+    console.error("❌ OPENAI_API_KEY manquante");
     process.exit(1);
   }
 
