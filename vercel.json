@@ -6,6 +6,7 @@
   "outputDirectory": ".next",
   "env": {
     "NEXT_PUBLIC_SUPABASE_URL": "https://whupjowzlvabiamcdzal.supabase.co",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndodXBqb3d6bHZhYmlhbWNkemFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNzc2NjUsImV4cCI6MjA1MDg1MzY2NX0.aySI7hWq3EohzdpWepw81a4qZLrfr5Sph_dd_6lpoFc"
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndodXBqb3d6bHZhYmlhbWNkemFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNzc2NjUsImV4cCI6MjA1MDg1MzY2NX0.aySI7hWq3EohzdpWepw81a4qZLrfr5Sph_dd_6lpoFc",
+    "OPENAI_API_KEY": "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"
   }
 }

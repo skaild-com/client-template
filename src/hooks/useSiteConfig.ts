@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { SiteConfig } from "@/app/config/types";
+import { generateBusinessContent } from "@/services/aiContent";
 
 // Créer le client Supabase une seule fois en dehors du hook
 const supabase = createClient(
@@ -14,17 +15,18 @@ const defaultConfig: SiteConfig = {
   id: "default",
   business: {
     name: "Business Test",
-    phone: "+33 1 23 45 67 89",
+    phone: "+1 234 567 8900",
     email: "contact@test-business.skaild.com",
+    businessType: "default",
     address: {
-      street: "123 Rue Test",
-      city: "Paris",
-      state: "IDF",
-      zip: "75000",
+      street: "123 Test Street",
+      city: "New York",
+      state: "NY",
+      zip: "10001",
     },
     hours: {
-      weekdays: "9:00 - 18:00",
-      weekends: "Fermé",
+      weekdays: "9:00 AM - 6:00 PM",
+      weekends: "Closed",
     },
   },
   theme: {
@@ -43,35 +45,43 @@ const defaultConfig: SiteConfig = {
   },
   content: {
     hero: {
-      title: "Site de test",
-      subtitle: "Configuration par défaut pour le développement",
+      title: "Test Website",
+      subtitle: "Default configuration for development",
       cta: {
-        primary: "Commencer",
-        secondary: "En savoir plus",
+        primary: "Get Started",
+        secondary: "Learn More",
       },
     },
     services: [
       {
         title: "Service 1",
-        description: "Description du service 1",
-        icon: "🚀",
+        description: "Description of service 1",
       },
       {
         title: "Service 2",
-        description: "Description du service 2",
-        icon: "💡",
+        description: "Description of service 2",
+      },
+      {
+        title: "Service 3",
+        description: "Description of service 3",
       },
     ],
     features: [
       {
-        title: "Fonctionnalité 1",
-        description: "Description de la fonctionnalité 1",
-        icon: "⚡",
+        title: "Feature 1",
+        description: "Description of feature 1",
       },
       {
-        title: "Fonctionnalité 2",
-        description: "Description de la fonctionnalité 2",
-        icon: "🎯",
+        title: "Feature 2",
+        description: "Description of feature 2",
+      },
+      {
+        title: "Feature 3",
+        description: "Description of feature 3",
+      },
+      {
+        title: "Feature 4",
+        description: "Description of feature 4",
       },
     ],
   },
@@ -179,6 +189,7 @@ export function useSiteConfig() {
               phone:
                 site.business_profiles?.phone || "Contact number not available",
               email: site.business_profiles?.email || "Email not available",
+              businessType: site.business_profiles?.business_type || "general",
               address: site.business_profiles?.address || {
                 street: "Street Address",
                 city: "City",
@@ -197,7 +208,34 @@ export function useSiteConfig() {
             content: site.content || defaultConfig.content,
           };
 
-          console.log("Configuration formatée:", formattedConfig);
+          // Si le contenu n'est pas personnalisé et qu'on a un business_type
+          if (
+            !site.content?.services ||
+            site.content.services.length < 3 ||
+            !site.content?.features ||
+            site.content.features.length < 4
+          ) {
+            try {
+              console.log("Attempting AI content generation...");
+              const generatedContent = await generateBusinessContent(
+                site.business_profiles?.name || defaultConfig.business.name,
+                site.business_profiles?.business_type || "default"
+              );
+
+              formattedConfig.content = {
+                ...formattedConfig.content,
+                ...generatedContent,
+              };
+              console.log("Content generated successfully");
+            } catch (error) {
+              console.warn(
+                "Échec de la génération AI, utilisation du contenu par défaut:",
+                error
+              );
+            }
+          }
+
+          console.log("Formatted configuration:", formattedConfig);
 
           setConfig(formattedConfig);
           setError(null);

@@ -11,6 +11,7 @@ function verifyEnv() {
   const requiredVars = [
     "NEXT_PUBLIC_SUPABASE_URL",
     "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "OPENAI_API_KEY",
   ];
 
   const env = vercelConfig.env;
@@ -29,6 +30,7 @@ function verifyEnv() {
     NEXT_PUBLIC_SUPABASE_ANON_KEY: env.NEXT_PUBLIC_SUPABASE_ANON_KEY
       ? "✓"
       : "✗",
+    OPENAI_API_KEY: env.OPENAI_API_KEY ? "✓" : "✗",
   });
 }
 

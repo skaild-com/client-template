@@ -4,6 +4,7 @@ export interface SiteConfig {
     name: string;
     phone: string;
     email: string;
+    businessType: string;
     address: {
       street: string;
       city: string;
@@ -41,12 +42,10 @@ export interface SiteConfig {
     services: Array<{
       title: string;
       description: string;
-      icon: string;
     }>;
     features: Array<{
       title: string;
       description: string;
-      icon: string;
     }>;
   };
 }

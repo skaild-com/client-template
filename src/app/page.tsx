@@ -58,7 +58,6 @@ export default function HomePage() {
                 key={index}
                 className="p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow"
               >
-                <div className="text-4xl mb-4">{service.icon}</div>
                 <h3 className="text-xl font-bold mb-2">{service.title}</h3>
                 <p className="text-gray-600">{service.description}</p>
               </div>
@@ -76,23 +75,16 @@ export default function HomePage() {
           <h2 className="text-4xl font-bold text-center mb-12">
             Why Choose Us
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-20">
             {config.content?.features?.map((feature, index) => (
               <div
                 key={index}
-                className="flex items-center p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                className="p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
               >
-                <div className="text-4xl mr-4">{feature.icon}</div>
-                <div>
-                  <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                  <p className="text-gray-600">{feature.description}</p>
-                </div>
+                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
               </div>
-            )) || (
-              <div className="col-span-2 text-center text-gray-500">
-                No features available
-              </div>
-            )}
+            ))}
           </div>
         </div>
       </section>

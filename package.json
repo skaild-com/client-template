@@ -7,7 +7,9 @@
     "dev": "npm run verify && next dev --turbopack",
     "build": "npm run verify && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:content": "ts-node --project tsconfig.test.json src/services/__tests__/aiContent.test.ts",
+    "test:gen": "ts-node --project tsconfig.test.json src/services/__tests__/testGeneration.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.47.10",
@@ -17,7 +19,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@types/node": "^20",
+    "@types/node": "^20.17.11",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
