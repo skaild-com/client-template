@@ -8,42 +8,51 @@ const vercelConfig = require("../vercel.json");
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
 function loadEnvFile() {
+  let env = {};
+
   // Vérifier d'abord vercel.json
-  if (vercelConfig.env?.OPENAI_API_KEY && vercelConfig.env?.FAL_KEY) {
-    return {
-      OPENAI_API_KEY: vercelConfig.env.OPENAI_API_KEY,
-      FAL_KEY: vercelConfig.env.FAL_KEY,
-    };
+  if (vercelConfig.env) {
+    env = { ...vercelConfig.env };
   }
 
-  // Sinon vérifier .env.local
+  // Vérifier ensuite .env.local
   const envPath = join(__dirname, "../.env.local");
-  if (!existsSync(envPath)) {
-    console.error("❌ Clés d'API manquantes dans vercel.json et .env.local");
-    process.exit(1);
+  if (existsSync(envPath)) {
+    const envContent = readFileSync(envPath, "utf8");
+    const localEnv = Object.fromEntries(
+      envContent
+        .split("\n")
+        .filter((line) => line && !line.startsWith("#"))
+        .map((line) => line.split("="))
+    );
+
+    // Fusionner avec priorité pour .env.local
+    env = { ...env, ...localEnv };
   }
 
-  const envContent = readFileSync(envPath, "utf8");
-  return Object.fromEntries(
-    envContent
-      .split("\n")
-      .filter((line) => line && !line.startsWith("#"))
-      .map((line) => line.split("="))
-  );
+  return env;
 }
 
 function verifyEnv() {
   const env = loadEnvFile();
+  const missingKeys = [];
+
   if (!env.OPENAI_API_KEY) {
-    console.error("❌ OPENAI_API_KEY manquante");
-    process.exit(1);
+    missingKeys.push("OPENAI_API_KEY");
   }
   if (!env.FAL_KEY) {
-    console.error("❌ FAL_KEY manquante");
+    missingKeys.push("FAL_KEY");
+  }
+
+  if (missingKeys.length > 0) {
+    console.error(
+      `❌ Missing environment variables: ${missingKeys.join(", ")}`
+    );
+    console.error("Please check both vercel.json and .env.local files");
     process.exit(1);
   }
 
-  console.log("✅ Configuration vérifiée avec succès");
+  console.log("✅ Environment variables verified successfully");
 }
 
 verifyEnv();
