@@ -1,5 +1,6 @@
-import { generateImage } from "./imageGeneration";
+import { fal } from "@fal-ai/client";
 import { SiteContent, Service, Feature } from "@/app/config/types";
+import { generateImage } from "./imageGeneration";
 
 export async function generateBusinessContent(
   businessName: string,
@@ -14,7 +15,8 @@ export async function generateBusinessContent(
      - 3 key services
      - 4 features
   
-  Expected JSON format: {
+  Return ONLY the JSON object without any markdown formatting or backticks. Format:
+  {
     "social": {
       "twitter": "",
       "facebook": "",
@@ -39,54 +41,28 @@ export async function generateBusinessContent(
     ]
   }`;
 
-  if (!process.env.OPENAI_API_KEY) {
-    console.warn("OpenAI API key not found, using fallback content");
-    return getFallbackContent(businessName, businessType);
-  }
-
-  console.log("OpenAI API Key present:", !!process.env.OPENAI_API_KEY);
-
   try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    const result = await fal.subscribe("fal-ai/any-llm", {
+      input: {
+        model: "openai/gpt-4o",
+        prompt,
+        system_prompt:
+          "You are a professional business content writer. Return ONLY valid JSON without any markdown formatting or explanation.",
       },
-      body: JSON.stringify({
-        model: "gpt-3.5-turbo",
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        response_format: { type: "json_object" },
-      }),
+      logs: true,
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      const errorJson = JSON.parse(errorText);
-
-      // Si l'erreur est liée au quota, on le log clairement
-      if (errorJson.error?.code === "insufficient_quota") {
-        console.warn("OpenAI API quota exceeded, using fallback content");
-      } else {
-        console.warn(`OpenAI API error: ${response.status}`, errorText);
-      }
-
-      return getFallbackContent(businessName, businessType);
+    if (!result.data?.output) {
+      throw new Error("No output in response");
     }
 
-    const data = await response.json();
+    // Nettoyer la sortie de tout formatage markdown
+    const cleanOutput = result.data.output
+      .replace(/```json\n?/g, "")
+      .replace(/```\n?/g, "")
+      .trim();
 
-    if (!data.choices?.[0]?.message?.content) {
-      throw new Error("Invalid API response");
-    }
-
-    const generatedContent = JSON.parse(data.choices[0].message.content);
+    const generatedContent = JSON.parse(cleanOutput);
     console.log("🤖 Content generated successfully");
 
     // Validation du contenu généré
