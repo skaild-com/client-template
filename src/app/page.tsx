@@ -31,6 +31,12 @@ export default function HomePage() {
 
   return (
     <ThemeProvider config={config}>
+      <div className="absolute top-4 left-4 z-10">
+        <h1 className="text-2xl font-bold text-white">
+          {config.business?.name || "Business Name"}
+        </h1>
+      </div>
+
       <section className="hero-gradient text-white min-h-[80vh] flex items-center">
         <div className="container mx-auto px-4 py-20 text-center">
           <h1 className="text-6xl font-bold mb-6 animate-fade-in">
