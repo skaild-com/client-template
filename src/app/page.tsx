@@ -10,24 +10,8 @@ export default function HomePage() {
 
   if (loading) return <div className="p-4">Loading...</div>;
   if (error)
-    return (
-      <div className="p-4 text-red-500">
-        <h2>Error loading site configuration:</h2>
-        <pre className="mt-4 p-4 bg-gray-100 rounded-lg overflow-auto">
-          {error.message}
-        </pre>
-      </div>
-    );
-  if (!config)
-    return (
-      <div className="p-4 text-orange-500">
-        <h2>Site not found</h2>
-        <p>
-          Domain:{" "}
-          {typeof window !== "undefined" ? window.location.hostname : "N/A"}
-        </p>
-      </div>
-    );
+    return <div className="p-4 text-red-500">Error: {error.message}</div>;
+  if (!config) return <div className="p-4">Site not found</div>;
 
   return (
     <ThemeProvider config={config}>
@@ -40,18 +24,18 @@ export default function HomePage() {
       <section className="hero-gradient text-white min-h-[80vh] flex items-center">
         <div className="container mx-auto px-4 py-20 text-center">
           <h1 className="text-6xl font-bold mb-6 animate-fade-in">
-            {config.content?.hero?.title || "Bienvenue sur notre site"}
+            {config.content?.hero?.title || "Welcome to our site"}
           </h1>
           <p className="text-2xl mb-12 max-w-2xl mx-auto">
             {config.content?.hero?.subtitle ||
-              "Découvrez nos services exceptionnels"}
+              "Discover our exceptional services"}
           </p>
           <div className="flex gap-6 justify-center">
             <button className="btn btn-primary px-8 py-4 rounded-full text-lg">
-              {config.content?.hero?.cta?.primary || "Commencer"}
+              Request Service
             </button>
             <button className="btn btn-secondary px-8 py-4 rounded-full text-lg">
-              {config.content?.hero?.cta?.secondary || "En savoir plus"}
+              Contact Us
             </button>
           </div>
         </div>
@@ -59,7 +43,7 @@ export default function HomePage() {
 
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-12">Nos Services</h2>
+          <h2 className="text-4xl font-bold text-center mb-12">Our Services</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {config?.content?.services?.map((service, index) => (
               <div
@@ -72,21 +56,20 @@ export default function HomePage() {
                       src={service.imageUrl}
                       alt={service.title}
                       fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 33vw"
+                      loading="lazy"
                       className="object-cover"
+                      quality={75}
                       onError={(e) => {
                         console.error("Error loading image:", service.imageUrl);
                         e.currentTarget.style.display = "none";
                       }}
-                      onLoad={() =>
-                        console.log("Image loaded:", service.imageUrl)
-                      }
                     />
                   </div>
                 ) : (
                   <div className="mb-4 h-48 bg-gray-200 rounded-lg flex items-center justify-center">
                     <span className="text-gray-500">
-                      Image en cours de génération...
+                      Image is being generated...
                     </span>
                   </div>
                 )}
@@ -101,7 +84,7 @@ export default function HomePage() {
       <section className="bg-gray-50 py-20">
         <div className="container mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-12">
-            Nos Avantages
+            Our Advantages
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {config?.content?.features?.map((feature, index) => (
@@ -115,6 +98,7 @@ export default function HomePage() {
                       src={feature.imageUrl}
                       alt={feature.title}
                       fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 25vw, 25vw"
                       className="object-cover"
                       onLoad={() =>
                         console.log("Feature image loaded:", feature.imageUrl)
