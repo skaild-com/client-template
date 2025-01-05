@@ -222,16 +222,54 @@ export function useSiteConfig() {
                 site.business_profiles?.business_type || "default"
               );
 
-              formattedConfig.content = {
-                ...formattedConfig.content,
-                ...generatedContent,
+              // Préparer le contenu mis à jour en préservant la structure existante
+              const updatedContent = {
+                hero: generatedContent.hero,
+                services: generatedContent.services || [],
+                features: generatedContent.features || [],
               };
-              console.log("Content generated successfully");
-            } catch (error) {
-              console.warn(
-                "Échec de la génération AI, utilisation du contenu par défaut:",
-                error
+
+              console.log(
+                "📦 Contenu à sauvegarder:",
+                JSON.stringify(updatedContent, null, 2)
               );
+
+              // Première étape : mise à jour
+              const { error: updateError } = await supabase
+                .from("sites")
+                .update({
+                  content: updatedContent,
+                })
+                .eq("id", site.id);
+
+              if (updateError) {
+                console.error("❌ Erreur de mise à jour:", updateError);
+                throw updateError;
+              }
+
+              // Deuxième étape : récupération du site mis à jour
+              const { data: updatedSite, error: fetchError } = await supabase
+                .from("sites")
+                .select("*")
+                .eq("id", site.id)
+                .single();
+
+              if (fetchError) {
+                console.error("❌ Erreur de récupération:", fetchError);
+                throw fetchError;
+              }
+
+              // Vérification et mise à jour locale
+              console.log("✅ Site mis à jour:", {
+                id: updatedSite.id,
+                contentSaved: !!updatedSite.content,
+                servicesCount: updatedSite.content?.services?.length || 0,
+                featuresCount: updatedSite.content?.features?.length || 0,
+              });
+
+              formattedConfig.content = updatedContent;
+            } catch (error) {
+              console.error("❌ Erreur lors de la mise à jour:", error);
             }
           }
 

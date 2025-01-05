@@ -1,42 +1,41 @@
-interface GeneratedContent {
-  hero: {
-    title: string;
-    subtitle: string;
-    cta: {
-      primary: string;
-      secondary: string;
-    };
-  };
-  services: Array<{
-    title: string;
-    description: string;
-  }>;
-  features: Array<{
-    title: string;
-    description: string;
-  }>;
-}
+import { generateImage } from "./imageGeneration";
+import { SiteContent, Service, Feature } from "@/app/config/types";
 
 export async function generateBusinessContent(
   businessName: string,
   businessType: string
-): Promise<GeneratedContent> {
+): Promise<SiteContent> {
   const prompt = `Generate professional content in English for a ${businessType} website named "${businessName}". Include:
-  1. A catchy title and subtitle for the hero section
-  2. 3 key services with descriptions (adapted to the business type)
-  3. 4 unique selling points
-  The content must be specifically adapted to a ${businessType} business.
+  1. Business information:
+     - Social media handles
+     - Contact information
+  2. Website content:
+     - Hero section with title and subtitle
+     - 3 key services
+     - 4 features
+  
   Expected JSON format: {
+    "social": {
+      "twitter": "",
+      "facebook": "",
+      "instagram": ""
+    },
+    "contact": {
+      "email": "",
+      "phone": "",
+      "address": ""
+    },
+    "business_name": "${businessName}",
     "hero": {
-      "title": "...",
-      "subtitle": "...",
-      "cta": {"primary": "...", "secondary": "..."}
+      "title": "",
+      "subtitle": "",
+      "cta": {"primary": "", "secondary": ""}
     },
     "services": [
-      {"title": "...", "description": "..."}
+      {"title": "", "description": ""}
     ],
     "features": [
-      {"title": "...", "description": "..."}
+      {"title": "", "description": ""}
     ]
   }`;
 
@@ -88,7 +87,7 @@ export async function generateBusinessContent(
     }
 
     const generatedContent = JSON.parse(data.choices[0].message.content);
-    console.log("Generated content:", generatedContent);
+    console.log("🤖 Content generated successfully");
 
     // Validation du contenu généré
     if (
@@ -98,6 +97,54 @@ export async function generateBusinessContent(
     ) {
       console.warn("Generated content is incomplete, using fallback");
       return getFallbackContent(businessName, businessType);
+    }
+
+    // Générer les images pour les services
+    console.log("🎨 Starting service image generation...");
+    for (const service of generatedContent.services) {
+      try {
+        console.log(`\n📝 Generating image for service: ${service.title}`);
+        const imagePrompt = createImagePromptFromService(service, businessType);
+        const imageUrl = await generateImage({
+          prompt: imagePrompt,
+          aspectRatio: "4:3",
+        });
+        service.imageUrl = imageUrl;
+        console.log(`✅ Image generated for ${service.title}: ${imageUrl}`);
+      } catch (error) {
+        console.warn(
+          `❌ Failed to generate image for service ${service.title}:`,
+          error
+        );
+      }
+    }
+
+    // Générer les images pour les features
+    console.log("\n🎨 Starting feature image generation...");
+    for (const feature of generatedContent.features) {
+      try {
+        if (!feature?.title) {
+          console.warn("❌ Invalid feature object:", feature);
+          continue;
+        }
+
+        console.log(`\n📝 Generating image for feature: ${feature.title}`);
+        const imagePrompt = createImagePromptFromFeature(feature, businessType);
+        const imageUrl = await generateImage({
+          prompt: imagePrompt,
+          aspectRatio: "1:1",
+        });
+        feature.imageUrl = imageUrl;
+        console.log(`✅ Image generated for ${feature.title}: ${imageUrl}`);
+      } catch (error) {
+        console.warn(
+          `❌ Failed to generate image for feature ${
+            feature?.title || "unknown"
+          }:`,
+          error
+        );
+        feature.imageUrl = "https://placehold.co/400x400?text=Feature+Image";
+      }
     }
 
     return generatedContent;
@@ -110,203 +157,89 @@ export async function generateBusinessContent(
 function getFallbackContent(
   businessName: string,
   businessType: string
-): GeneratedContent {
-  const contentByType: Record<string, Partial<GeneratedContent>> = {
-    plumber: {
-      hero: {
-        title: `${businessName} - Professional Plumbing`,
-        subtitle: "Fast repairs and quality installations",
-        cta: {
-          primary: "24/7 Emergency",
-          secondary: "Free Quote",
-        },
-      },
-      services: [
-        {
-          title: "Emergency Repairs",
-          description: "Quick intervention for leaks and breakdowns",
-        },
-        {
-          title: "Plumbing Installation",
-          description: "New installations and renovations",
-        },
-        {
-          title: "Heating Systems",
-          description: "Boiler installation and maintenance",
-        },
-      ],
-    },
-    electrician: {
-      hero: {
-        title: `${businessName} - Professional Electrician`,
-        subtitle: "Certified electrical installations and repairs",
-        cta: {
-          primary: "Emergency Call",
-          secondary: "Our Services",
-        },
-      },
-      services: [
-        {
-          title: "Emergency Repairs",
-          description: "24/7 rapid intervention",
-        },
-        {
-          title: "Safety Compliance",
-          description: "Inspection and certification",
-        },
-        {
-          title: "Installation",
-          description: "New work and renovation",
-        },
-      ],
-    },
-    beauty_salon: {
-      hero: {
-        title: `${businessName} - Beauty Salon`,
-        subtitle: "Your wellness and beauty space",
-        cta: {
-          primary: "Book Now",
-          secondary: "Our Treatments",
-        },
-      },
-      services: [
-        {
-          title: "Facial Care",
-          description: "Personalized treatments",
-        },
-        {
-          title: "Hairstyling",
-          description: "Cuts and coloring",
-        },
-        {
-          title: "Manicure",
-          description: "Hand and nail care",
-        },
-      ],
-    },
-    restaurant: {
-      hero: {
-        title: `${businessName} - Restaurant gastronomique`,
-        subtitle: "Une expérience culinaire unique",
-        cta: {
-          primary: "Réserver",
-          secondary: "Notre carte",
-        },
-      },
-      services: [
-        {
-          title: "Service midi",
-          description: "Menu du jour fait maison",
-        },
-        {
-          title: "Service soir",
-          description: "Carte gastronomique",
-        },
-        {
-          title: "Événements",
-          description: "Privatisation possible",
-        },
-      ],
-    },
-    landscaper: {
-      hero: {
-        title: `${businessName} - Paysagiste professionnel`,
-        subtitle: "Créez votre jardin de rêve",
-        cta: {
-          primary: "Devis gratuit",
-          secondary: "Nos réalisations",
-        },
-      },
-      services: [
-        {
-          title: "Aménagement paysager",
-          description: "Conception et réalisation de jardins",
-        },
-        {
-          title: "Entretien",
-          description: "Tonte, taille et soins des végétaux",
-        },
-        {
-          title: "Terrasse & Clôture",
-          description: "Installation et rénovation",
-        },
-      ],
-    },
-    mechanic: {
-      hero: {
-        title: `${businessName} - Garage automobile`,
-        subtitle: "Entretien et réparation toutes marques",
-        cta: {
-          primary: "Rendez-vous",
-          secondary: "Nos services",
-        },
-      },
-      services: [
-        {
-          title: "Réparation",
-          description: "Diagnostic et réparation tous véhicules",
-        },
-        {
-          title: "Entretien",
-          description: "Révision et maintenance préventive",
-        },
-        {
-          title: "Pneumatiques",
-          description: "Changement et équilibrage",
-        },
-      ],
-    },
-  };
-
-  // Default content for undefined types
-  const defaultContent = {
+): SiteContent {
+  return {
     hero: {
-      title: `${businessName} - Professional Service`,
-      subtitle: "Quality and expertise at your service",
+      title: `${businessName} - Professional ${
+        businessType.charAt(0).toUpperCase() + businessType.slice(1)
+      }`,
+      subtitle: "Quality Services You Can Trust",
       cta: {
         primary: "Contact Us",
         secondary: "Learn More",
       },
     },
-    services: [
-      {
-        title: "Main Service",
-        description: "Our core expertise",
-      },
-      {
-        title: "Custom Consulting",
-        description: "Tailored guidance",
-      },
-      {
-        title: "Customer Support",
-        description: "Ongoing assistance",
-      },
-    ],
-    features: [
-      {
-        title: "Experience",
-        description: "Over 10 years of expertise",
-      },
-      {
-        title: "Quality",
-        description: "Premium service guaranteed",
-      },
-      {
-        title: "Responsiveness",
-        description: "Quick intervention",
-      },
-      {
-        title: "Satisfaction",
-        description: "Happy customers",
-      },
-    ],
+    services: [],
+    features: [],
+  };
+}
+
+function createImagePromptFromService(
+  service: Service,
+  businessType: string
+): string {
+  // Extraire les éléments clés du service
+  const keywords = service.description
+    .toLowerCase()
+    .split(" ")
+    .filter(
+      (word) =>
+        !["and", "the", "for", "to", "a", "of", "in", "with", "our"].includes(
+          word
+        )
+    );
+
+  const prompt = `Professional photograph of ${businessType} service in action: ${service.title.toLowerCase()}. 
+    Scene showing ${keywords.slice(0, 5).join(" ")}. 
+    Modern workplace setting, high-quality professional equipment, 
+    natural lighting, 4K quality, professional photography`;
+
+  console.log("\n🎨 Generated service prompt:");
+  console.log("Title:", service.title);
+  console.log("Original description:", service.description);
+  console.log("Generated prompt:", prompt);
+
+  return prompt;
+}
+
+function createImagePromptFromFeature(
+  feature: Feature,
+  businessType: string
+): string {
+  const conceptMap: { [key: string]: string } = {
+    experience: "seasoned professional at work with confidence",
+    quality: "premium tools and equipment in pristine condition",
+    expertise: "professional using advanced techniques",
+    satisfaction: "successful project completion",
+    service: "attentive professional helping customer",
+    support: "friendly customer interaction",
+    available: "24/7 service vehicle ready for action",
+    certified: "professional displaying certifications",
+    guarantee: "handshake with customer",
+    reliable: "dependable professional with tools ready",
+    efficient: "swift professional work in progress",
+    modern: "cutting-edge equipment in use",
+    professional: "expert at work with precision",
+    innovative: "latest technology being utilized",
   };
 
-  const typeContent = contentByType[businessType] || defaultContent;
+  const concept = Object.keys(conceptMap).find(
+    (key) =>
+      feature.title.toLowerCase().includes(key) ||
+      feature.description.toLowerCase().includes(key)
+  );
 
-  return {
-    ...defaultContent,
-    ...typeContent,
-    features: defaultContent.features,
-  } as GeneratedContent;
+  const prompt = concept
+    ? `Minimalist illustration of ${conceptMap[concept]} in ${businessType} context. 
+       Clean vector style, iconic representation, professional setting`
+    : `Modern illustration representing ${businessType} professional excellence. 
+       ${feature.title}. Minimalist style, professional context`;
+
+  console.log("\n✨ Generated feature prompt:");
+  console.log("Title:", feature.title);
+  console.log("Original description:", feature.description);
+  console.log("Matched concept:", concept || "none");
+  console.log("Generated prompt:", prompt);
+
+  return prompt;
 }

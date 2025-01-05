@@ -1,10 +1,8 @@
-"use client";
-
 import { createContext, useContext } from "react";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import { SiteConfig } from "@/app/config/types";
 
-// Types définis localement
+// Types
 interface SiteContextType {
   config: SiteConfig | null;
   loading: boolean;
@@ -34,5 +32,4 @@ export function SiteProvider({ children }: SiteProviderProps) {
   );
 }
 
-// Export des types pour réutilisation
 export type { SiteContextType, SiteProviderProps };

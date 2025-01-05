@@ -7,6 +7,7 @@
   "env": {
     "NEXT_PUBLIC_SUPABASE_URL": "https://whupjowzlvabiamcdzal.supabase.co",
     "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndodXBqb3d6bHZhYmlhbWNkemFsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUyNzc2NjUsImV4cCI6MjA1MDg1MzY2NX0.aySI7hWq3EohzdpWepw81a4qZLrfr5Sph_dd_6lpoFc",
-    "OPENAI_API_KEY": "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"
+    "OPENAI_API_KEY": "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",
+    "FAL_KEY": "3174b227-e845-4221-88ab-bed099c568cd:5610b9d7b510a5b617b0598e1069d340"
   }
 }

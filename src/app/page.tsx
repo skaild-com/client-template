@@ -1,7 +1,9 @@
 "use client";
 
+import React from "react";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
-import { ThemeProvider } from "./components/ThemeProvider";
+import { ThemeProvider } from "@/app/providers/ThemeProvider";
+import Image from "next/image";
 
 export default function HomePage() {
   const { config, loading, error } = useSiteConfig();
@@ -49,39 +51,72 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="section bg-white">
-        <div className="container">
-          <h2 className="text-4xl font-bold text-center mb-12">Our Services</h2>
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <h2 className="text-4xl font-bold text-center mb-12">Nos Services</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {config.content?.services?.map((service, index) => (
+            {config?.content?.services?.map((service, index) => (
               <div
                 key={index}
                 className="p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow"
               >
+                {service.imageUrl ? (
+                  <div className="mb-4 overflow-hidden rounded-lg h-48 relative">
+                    <Image
+                      src={service.imageUrl}
+                      alt={service.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover"
+                      onError={(e) => {
+                        console.error("Error loading image:", service.imageUrl);
+                        e.currentTarget.style.display = "none";
+                      }}
+                      onLoad={() =>
+                        console.log("Image loaded:", service.imageUrl)
+                      }
+                    />
+                  </div>
+                ) : (
+                  <div className="mb-4 h-48 bg-gray-200 rounded-lg flex items-center justify-center">
+                    <span className="text-gray-500">
+                      Image en cours de génération...
+                    </span>
+                  </div>
+                )}
                 <h3 className="text-xl font-bold mb-2">{service.title}</h3>
                 <p className="text-gray-600">{service.description}</p>
               </div>
-            )) || (
-              <div className="col-span-3 text-center text-gray-500">
-                No services available
-              </div>
-            )}
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="section bg-gray-50">
-        <div className="container">
+      <section className="bg-gray-50 py-20">
+        <div className="container mx-auto px-4">
           <h2 className="text-4xl font-bold text-center mb-12">
-            Why Choose Us
+            Nos Avantages
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-20">
-            {config.content?.features?.map((feature, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {config?.content?.features?.map((feature, index) => (
               <div
                 key={index}
                 className="p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
               >
-                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                {feature.imageUrl && (
+                  <div className="mb-4 overflow-hidden rounded-lg h-48 relative">
+                    <Image
+                      src={feature.imageUrl}
+                      alt={feature.title}
+                      fill
+                      className="object-cover"
+                      onLoad={() =>
+                        console.log("Feature image loaded:", feature.imageUrl)
+                      }
+                    />
+                  </div>
+                )}
+                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
                 <p className="text-gray-600">{feature.description}</p>
               </div>
             ))}

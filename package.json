@@ -9,9 +9,14 @@
     "start": "next start",
     "lint": "next lint",
     "test:content": "ts-node --project tsconfig.test.json src/services/__tests__/aiContent.test.ts",
-    "test:gen": "ts-node --project tsconfig.test.json src/services/__tests__/testGeneration.ts"
+    "test:gen": "ts-node --project tsconfig.test.json src/services/__tests__/testGeneration.ts",
+    "test:image": "NODE_ENV=test ts-node --project tsconfig.test.json src/services/__tests__/testImage.ts",
+    "test:generation": "ts-node src/services/__tests__/testGeneration.ts",
+    "test:supabase": "ts-node --project tsconfig.test.json src/services/__tests__/testSupabase.ts",
+    "cleanup": "ts-node --project tsconfig.test.json src/services/__tests__/cleanupTest.ts"
   },
   "dependencies": {
+    "@fal-ai/client": "^1.2.1",
     "@supabase/supabase-js": "^2.47.10",
     "next": "15.1.3",
     "react": "^19.0.0",
@@ -22,6 +27,7 @@
     "@types/node": "^20.17.11",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^16.4.7",
     "eslint": "^9",
     "eslint-config-next": "15.1.3",
     "postcss": "^8",

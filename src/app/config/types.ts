@@ -1,3 +1,32 @@
+export interface Service {
+  title: string;
+  description: string;
+  imageUrl?: string;
+  icon?: string;
+}
+
+export interface Feature {
+  title: string;
+  description: string;
+  imageUrl?: string;
+  icon?: string;
+}
+
+export interface Hero {
+  title: string;
+  subtitle: string;
+  cta: {
+    primary: string;
+    secondary: string;
+  };
+}
+
+export interface SiteContent {
+  hero: Hero;
+  services: Service[];
+  features: Feature[];
+}
+
 export interface SiteConfig {
   id: string;
   business: {
@@ -25,27 +54,10 @@ export interface SiteConfig {
       text: string;
     };
     style: {
-      buttonRadius: "rounded" | "square" | "pill";
-      headerStyle: "minimal" | "standard" | "prominent";
-      layout: "wide" | "boxed";
+      layout: string;
+      buttonRadius: string;
+      headerStyle: string;
     };
   };
-  content: {
-    hero: {
-      title: string;
-      subtitle: string;
-      cta: {
-        primary: string;
-        secondary: string;
-      };
-    };
-    services: Array<{
-      title: string;
-      description: string;
-    }>;
-    features: Array<{
-      title: string;
-      description: string;
-    }>;
-  };
+  content: SiteContent;
 }

@@ -9,14 +9,17 @@ const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
 function loadEnvFile() {
   // Vérifier d'abord vercel.json
-  if (vercelConfig.env?.OPENAI_API_KEY) {
-    return { OPENAI_API_KEY: vercelConfig.env.OPENAI_API_KEY };
+  if (vercelConfig.env?.OPENAI_API_KEY && vercelConfig.env?.FAL_KEY) {
+    return {
+      OPENAI_API_KEY: vercelConfig.env.OPENAI_API_KEY,
+      FAL_KEY: vercelConfig.env.FAL_KEY,
+    };
   }
 
   // Sinon vérifier .env.local
   const envPath = join(__dirname, "../.env.local");
   if (!existsSync(envPath)) {
-    console.error("❌ OPENAI_API_KEY manquante dans vercel.json et .env.local");
+    console.error("❌ Clés d'API manquantes dans vercel.json et .env.local");
     process.exit(1);
   }
 
@@ -33,6 +36,10 @@ function verifyEnv() {
   const env = loadEnvFile();
   if (!env.OPENAI_API_KEY) {
     console.error("❌ OPENAI_API_KEY manquante");
+    process.exit(1);
+  }
+  if (!env.FAL_KEY) {
+    console.error("❌ FAL_KEY manquante");
     process.exit(1);
   }
 

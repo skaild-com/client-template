@@ -1,16 +1,21 @@
+import { config } from "dotenv";
+import { resolve } from "path";
 import { generateBusinessContent } from "../aiContent";
 
+// Charger les variables d'environnement depuis .env.local
+config({ path: resolve(__dirname, "../../../.env.local") });
+
 async function testGeneration() {
+  console.log("Environment check:");
+  console.log("OPENAI_API_KEY present:", !!process.env.OPENAI_API_KEY);
+  console.log("FAL_KEY present:", !!process.env.FAL_KEY);
+
   const testCases = [
     { name: "Express Plumbing", type: "plumber" },
     { name: "ElectroTech Pro", type: "electrician" },
-    { name: "Beauty & Zen", type: "beauty_salon" },
-    { name: "Corner Restaurant", type: "restaurant" },
-    { name: "GreenGarden", type: "landscaper" },
-    { name: "AutoPro", type: "mechanic" },
-  ];
+  ]; // Réduisons le nombre de tests pour commencer
 
-  console.log("🧪 Starting content generation tests...\n");
+  console.log("\n🧪 Starting content generation tests...\n");
 
   for (const test of testCases) {
     console.log(`\n📝 Test for: ${test.name} (${test.type})`);
@@ -30,12 +35,18 @@ async function testGeneration() {
       content.services.forEach((service, i) => {
         console.log(`${i + 1}. ${service.title}`);
         console.log(`   ${service.description}`);
+        if (service.imageUrl) {
+          console.log(`   🖼 Image: ${service.imageUrl}`);
+        }
       });
 
       console.log("\n✨ FEATURES:");
       content.features.forEach((feature, i) => {
         console.log(`${i + 1}. ${feature.title}`);
         console.log(`   ${feature.description}`);
+        if (feature.imageUrl) {
+          console.log(`   🖼 Image: ${feature.imageUrl}`);
+        }
       });
 
       console.log("\n✅ Test successful!");
