@@ -36,9 +36,6 @@ function verifyEnv() {
   const env = loadEnvFile();
   const missingKeys = [];
 
-  if (!env.OPENAI_API_KEY) {
-    missingKeys.push("OPENAI_API_KEY");
-  }
   if (!env.FAL_KEY) {
     missingKeys.push("FAL_KEY");
   }

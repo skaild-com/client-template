@@ -7,7 +7,6 @@ config({ path: resolve(__dirname, "../../../.env.local") });
 
 async function testGeneration() {
   console.log("Environment check:");
-  console.log("OPENAI_API_KEY present:", !!process.env.OPENAI_API_KEY);
   console.log("FAL_KEY present:", !!process.env.FAL_KEY);
 
   const testCases = [

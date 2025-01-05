@@ -13,9 +13,7 @@ const vercelConfig = require("./vercel.json");
 
 // Filtrer les variables d'environnement autorisées
 const allowedEnvVars = {
-  // OPENAI_API_KEY vient uniquement de process.env
-  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-  // Les autres variables viennent du vercel.json
+  // Les variables viennent du vercel.json
   FAL_KEY: vercelConfig.env?.FAL_KEY,
   NEXT_PUBLIC_SUPABASE_URL: vercelConfig.env?.NEXT_PUBLIC_SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY:
