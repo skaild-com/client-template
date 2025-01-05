@@ -1,6 +1,10 @@
 import { fal } from "@fal-ai/client";
 import { SiteContent, Service, Feature } from "@/app/config/types";
-import { generateImage } from "./imageGeneration";
+import {
+  generateImage,
+  generateHeroBackground,
+  generateHeroIllustration,
+} from "./imageGeneration";
 
 export async function generateBusinessContent(
   businessName: string,
@@ -133,6 +137,24 @@ export async function generateBusinessContent(
         );
         feature.imageUrl = "https://placehold.co/400x400?text=Feature+Image";
       }
+    }
+
+    try {
+      console.log("🎨 Generating hero background...");
+      const backgroundUrl = await generateHeroBackground(businessType);
+      generatedContent.hero.backgroundUrl = backgroundUrl;
+      console.log("✅ Hero background generated:", backgroundUrl);
+
+      console.log("🎨 Generating hero illustration...");
+      const illustrationUrl = await generateHeroIllustration(
+        businessType,
+        businessName
+      );
+      generatedContent.hero.illustrationUrl = illustrationUrl;
+      console.log("✅ Hero illustration generated:", illustrationUrl);
+    } catch (error) {
+      console.warn("Failed to generate hero assets:", error);
+      // On continue même si la génération échoue
     }
 
     return generatedContent;

@@ -15,6 +15,8 @@ export interface Feature {
 export interface Hero {
   title: string;
   subtitle: string;
+  backgroundUrl?: string;
+  illustrationUrl?: string;
   cta: {
     primary: string;
     secondary: string;
