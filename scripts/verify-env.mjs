@@ -8,14 +8,15 @@ const vercelConfig = require("../vercel.json");
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
 function loadEnvFile() {
-  let env = {};
+  // Commencer avec process.env
+  let env = { ...process.env };
 
-  // Vérifier d'abord vercel.json
+  // Ajouter les variables de vercel.json
   if (vercelConfig.env) {
-    env = { ...vercelConfig.env };
+    env = { ...env, ...vercelConfig.env };
   }
 
-  // Vérifier ensuite .env.local
+  // Vérifier .env.local en dernier (priorité la plus haute)
   const envPath = join(__dirname, "../.env.local");
   if (existsSync(envPath)) {
     const envContent = readFileSync(envPath, "utf8");
@@ -25,8 +26,6 @@ function loadEnvFile() {
         .filter((line) => line && !line.startsWith("#"))
         .map((line) => line.split("="))
     );
-
-    // Fusionner avec priorité pour .env.local
     env = { ...env, ...localEnv };
   }
 
@@ -48,7 +47,7 @@ function verifyEnv() {
     console.error(
       `❌ Missing environment variables: ${missingKeys.join(", ")}`
     );
-    console.error("Please check both vercel.json and .env.local files");
+    console.error("Please check your environment variables configuration");
     process.exit(1);
   }
 
