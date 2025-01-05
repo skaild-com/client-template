@@ -12,7 +12,11 @@ export async function generateBusinessContent(
      - Contact information
   2. Website content:
      - Hero section with title and subtitle
-     - 3 key services
+     - 3 key services that:
+        * Are specific to ${businessType} industry
+        * Include clear value propositions
+        * Have detailed but concise descriptions (2-3 sentences)
+        * Focus on customer benefits
      - 4 features
   
   Return ONLY the JSON object without any markdown formatting or backticks. Format:
@@ -80,7 +84,12 @@ export async function generateBusinessContent(
     for (const service of generatedContent.services) {
       try {
         console.log(`\n📝 Generating image for service: ${service.title}`);
-        const imagePrompt = createImagePromptFromService(service, businessType);
+        const imagePrompt = await createImagePromptFromService(
+          service,
+          businessType
+        );
+        console.log("Generated prompt:", imagePrompt);
+
         const imageUrl = await generateImage({
           prompt: imagePrompt,
           aspectRatio: "4:3",
@@ -105,7 +114,10 @@ export async function generateBusinessContent(
         }
 
         console.log(`\n📝 Generating image for feature: ${feature.title}`);
-        const imagePrompt = createImagePromptFromFeature(feature, businessType);
+        const imagePrompt = await createImagePromptFromFeature(
+          feature,
+          businessType
+        );
         const imageUrl = await generateImage({
           prompt: imagePrompt,
           aspectRatio: "1:1",
@@ -150,72 +162,65 @@ function getFallbackContent(
   };
 }
 
+async function createOptimizedImagePrompt(
+  title: string,
+  description: string,
+  type: "service" | "feature",
+  businessType: string
+): Promise<string> {
+  const prompt = `Transforme la description suivante en un prompt concis pour générer une ${
+    type === "service" ? "photo professionnelle" : "icône ou illustration"
+  }. Inclue les éléments visuels clés, le style souhaité et les couleurs.
+
+Contexte: Site web pour ${businessType}
+Titre: ${title}
+Description: ${description}
+
+Le prompt doit être en anglais et optimisé pour la génération d'image.`;
+
+  try {
+    const result = await fal.subscribe("fal-ai/any-llm", {
+      input: {
+        model: "openai/gpt-4o",
+        prompt,
+        system_prompt:
+          "Tu es un expert en direction artistique, spécialisé dans la création de prompts pour la génération d'images.",
+      },
+    });
+
+    if (!result.data?.output) {
+      throw new Error("No response from GPT-4");
+    }
+
+    return result.data.output;
+  } catch (error) {
+    console.warn("Failed to generate optimized prompt:", error);
+    return `Professional ${
+      type === "service" ? "photograph" : "illustration"
+    } of ${businessType} ${title.toLowerCase()}. Modern style, high quality.`;
+  }
+}
+
 function createImagePromptFromService(
   service: Service,
   businessType: string
-): string {
-  // Extraire les éléments clés du service
-  const keywords = service.description
-    .toLowerCase()
-    .split(" ")
-    .filter(
-      (word) =>
-        !["and", "the", "for", "to", "a", "of", "in", "with", "our"].includes(
-          word
-        )
-    );
-
-  const prompt = `Professional photograph of ${businessType} service in action: ${service.title.toLowerCase()}. 
-    Scene showing ${keywords.slice(0, 5).join(" ")}. 
-    Modern workplace setting, high-quality professional equipment, 
-    natural lighting, 4K quality, professional photography`;
-
-  console.log("\n🎨 Generated service prompt:");
-  console.log("Title:", service.title);
-  console.log("Original description:", service.description);
-  console.log("Generated prompt:", prompt);
-
-  return prompt;
+): Promise<string> {
+  return createOptimizedImagePrompt(
+    service.title,
+    service.description,
+    "service",
+    businessType
+  );
 }
 
 function createImagePromptFromFeature(
   feature: Feature,
   businessType: string
-): string {
-  const conceptMap: { [key: string]: string } = {
-    experience: "seasoned professional at work with confidence",
-    quality: "premium tools and equipment in pristine condition",
-    expertise: "professional using advanced techniques",
-    satisfaction: "successful project completion",
-    service: "attentive professional helping customer",
-    support: "friendly customer interaction",
-    available: "24/7 service vehicle ready for action",
-    certified: "professional displaying certifications",
-    guarantee: "handshake with customer",
-    reliable: "dependable professional with tools ready",
-    efficient: "swift professional work in progress",
-    modern: "cutting-edge equipment in use",
-    professional: "expert at work with precision",
-    innovative: "latest technology being utilized",
-  };
-
-  const concept = Object.keys(conceptMap).find(
-    (key) =>
-      feature.title.toLowerCase().includes(key) ||
-      feature.description.toLowerCase().includes(key)
+): Promise<string> {
+  return createOptimizedImagePrompt(
+    feature.title,
+    feature.description,
+    "feature",
+    businessType
   );
-
-  const prompt = concept
-    ? `Minimalist illustration of ${conceptMap[concept]} in ${businessType} context. 
-       Clean vector style, iconic representation, professional setting`
-    : `Modern illustration representing ${businessType} professional excellence. 
-       ${feature.title}. Minimalist style, professional context`;
-
-  console.log("\n✨ Generated feature prompt:");
-  console.log("Title:", feature.title);
-  console.log("Original description:", feature.description);
-  console.log("Matched concept:", concept || "none");
-  console.log("Generated prompt:", prompt);
-
-  return prompt;
 }

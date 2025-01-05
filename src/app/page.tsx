@@ -24,18 +24,23 @@ export default function HomePage() {
       <section className="hero-gradient text-white min-h-[80vh] flex items-center">
         <div className="container mx-auto px-4 py-20 text-center">
           <h1 className="text-6xl font-bold mb-6 animate-fade-in">
-            {config.content?.hero?.title || "Welcome to our site"}
+            {config.content?.hero?.title || "Welcome"}
           </h1>
           <p className="text-2xl mb-12 max-w-2xl mx-auto">
             {config.content?.hero?.subtitle ||
-              "Discover our exceptional services"}
+              "Discover our exceptional services"}{" "}
+            {config.business?.address?.city && (
+              <span className="text-secondary-light">
+                in {config.business.address.city}
+              </span>
+            )}
           </p>
           <div className="flex gap-6 justify-center">
             <button className="btn btn-primary px-8 py-4 rounded-full text-lg">
-              Request Service
+              {config.content?.hero?.cta?.primary || "Request Service"}
             </button>
             <button className="btn btn-secondary px-8 py-4 rounded-full text-lg">
-              Contact Us
+              {config.content?.hero?.cta?.secondary || "Contact Us"}
             </button>
           </div>
         </div>
