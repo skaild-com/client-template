@@ -95,8 +95,14 @@ export function useSiteConfig() {
       try {
         setLoading(true);
         const domain = window.location.hostname;
+
+        // Add support for Vercel preview domains
         const searchDomain =
-          domain === "localhost" ? "plumber.skaild.com" : domain;
+          domain === "localhost"
+            ? "plumber.skaild.com"
+            : domain.includes("vercel.app")
+            ? "plumber.skaild.com" // Use the same fallback for Vercel deployments
+            : domain;
 
         // 1. D'abord, vérifions si nous avons déjà le contenu en cache
         const cacheKey = `site_config_${searchDomain}`;
@@ -169,7 +175,11 @@ export function useSiteConfig() {
           }
         }
       } catch (err) {
-        console.error("Error loading site config:", err);
+        console.error("Error loading site config:", {
+          error: err,
+          domain: window.location.hostname,
+          searchDomain: searchDomain,
+        });
         if (isSubscribed) {
           setError(err instanceof Error ? err : new Error(String(err)));
         }
