@@ -155,6 +155,8 @@ export function useSiteConfig() {
               content,
               content_generated: true,
               status: "published",
+              has_services: true,
+              has_features: true,
             })
             .eq("id", siteData.id);
 
@@ -172,6 +174,7 @@ export function useSiteConfig() {
                   name: service.title,
                   description: service.description,
                   icon: service.icon || "default",
+                  image_url: service.imageUrl,
                 }))
               );
             if (servicesError) throw servicesError;
@@ -186,6 +189,7 @@ export function useSiteConfig() {
                   title: feature.title,
                   description: feature.description,
                   icon: feature.icon || "default",
+                  image_url: feature.imageUrl,
                 }))
               );
             if (featuresError) throw featuresError;
@@ -201,6 +205,8 @@ export function useSiteConfig() {
             ...siteData,
             content,
             content_generated: true,
+            has_services: true,
+            has_features: true,
           };
         }
 
