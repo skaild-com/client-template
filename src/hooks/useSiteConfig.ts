@@ -99,9 +99,7 @@ export function useSiteConfig() {
         const hostname = window.location.hostname;
         let searchDomain = hostname;
 
-        // Si c'est un domaine Vercel, chercher le site parent
         if (hostname.includes(".vercel.app")) {
-          // Extraire le nom du site de l'URL Vercel (ex: outian-marche.vercel.app -> outian-marche)
           const siteName = hostname.split(".")[0];
           searchDomain = `${siteName}.skaild.com`;
           console.log("🔍 Searching for parent site:", searchDomain);
@@ -118,7 +116,7 @@ export function useSiteConfig() {
         }
 
         // 2. Chercher le site dans Supabase
-        const { data: siteData, error: fetchError } = await supabase
+        const { data, error: fetchError } = await supabase
           .from("sites")
           .select(
             `
@@ -131,12 +129,51 @@ export function useSiteConfig() {
           .eq("domain", searchDomain)
           .single();
 
+        let siteData = data;
+
         if (fetchError) {
           if (fetchError.code === "PGRST116") {
             console.error(`Site not found for domain: ${searchDomain}`);
             throw new Error(`Site not found for domain: ${searchDomain}`);
           }
           throw fetchError;
+        }
+
+        // 2. Si le contenu n'est pas généré, le générer
+        if (!siteData.content_generated) {
+          console.log("🔄 Génération du contenu...");
+          generationInProgress.current = true;
+
+          const content = await generateBusinessContent(
+            siteData.business_profiles.name,
+            siteData.business_profiles.business_type
+          );
+
+          const { error: updateError } = await supabase
+            .from("sites")
+            .update({
+              content,
+              content_generated: true,
+              status: "published",
+            })
+            .eq("id", siteData.id);
+
+          if (updateError) {
+            console.error("Update error:", updateError);
+            throw updateError;
+          }
+
+          console.log("🎨 Content generated:", {
+            heroTitle: content.hero.title,
+            servicesCount: content.services.length,
+            featuresCount: content.features.length,
+          });
+
+          siteData = {
+            ...siteData,
+            content,
+            content_generated: true,
+          };
         }
 
         // 3. Formater et mettre en cache
@@ -146,6 +183,18 @@ export function useSiteConfig() {
         if (isSubscribed) {
           setConfig(formattedConfig);
         }
+
+        console.log("📦 Site data retrieved:", {
+          name: siteData.business_profiles.name,
+          contentGenerated: siteData.content_generated,
+          hasServices: siteData.services?.length > 0,
+          hasFeatures: siteData.features?.length > 0,
+        });
+
+        console.log("🎨 Config cached:", {
+          business: formattedConfig.business.name,
+          hasContent: !!formattedConfig.content,
+        });
       } catch (err) {
         console.error("Error loading site config:", err);
         if (isSubscribed) {
