@@ -14,7 +14,8 @@
     "test:generation": "ts-node src/services/__tests__/testGeneration.ts",
     "test:supabase": "ts-node --project tsconfig.test.json src/services/__tests__/testSupabase.ts",
     "cleanup": "ts-node --project tsconfig.test.json src/services/__tests__/cleanupTest.ts",
-    "test:ideogram": "ts-node --project tsconfig.test.json src/services/__tests__/testIdeogram.ts"
+    "test:ideogram": "ts-node --project tsconfig.test.json src/services/__tests__/testIdeogram.ts",
+    "test:structure": "ts-node src/services/__tests__/testSupabaseStructure.ts"
   },
   "dependencies": {
     "@fal-ai/client": "^1.2.1",

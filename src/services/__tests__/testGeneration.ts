@@ -23,6 +23,7 @@ async function testGeneration() {
     try {
       const content = await generateBusinessContent(test.name, test.type);
 
+      // Afficher uniquement le contenu textuel
       console.log("\n🎯 HERO:");
       console.log(`Title: ${content.hero.title}`);
       console.log(`Subtitle: ${content.hero.subtitle}`);
@@ -34,18 +35,12 @@ async function testGeneration() {
       content.services.forEach((service, i) => {
         console.log(`${i + 1}. ${service.title}`);
         console.log(`   ${service.description}`);
-        if (service.imageUrl) {
-          console.log(`   🖼 Image: ${service.imageUrl}`);
-        }
       });
 
       console.log("\n✨ FEATURES:");
       content.features.forEach((feature, i) => {
         console.log(`${i + 1}. ${feature.title}`);
         console.log(`   ${feature.description}`);
-        if (feature.imageUrl) {
-          console.log(`   🖼 Image: ${feature.imageUrl}`);
-        }
       });
 
       console.log("\n✅ Test successful!");

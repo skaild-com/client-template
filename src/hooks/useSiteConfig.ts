@@ -1,290 +1,180 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { SiteConfig } from "@/app/config/types";
+import { SiteConfig, SiteContent } from "@/app/config/types";
 import { generateBusinessContent } from "@/services/aiContent";
 
-// Créer le client Supabase une seule fois en dehors du hook
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
 );
 
-const defaultConfig: SiteConfig = {
-  id: "default",
-  business: {
-    name: "Business Test",
-    phone: "+1 234 567 8900",
-    email: "contact@test-business.skaild.com",
-    businessType: "default",
+// Définir le type pour les données du site
+interface SiteData {
+  id: string;
+  content?: Record<string, unknown>;
+  content_generated: boolean;
+  business_profiles: {
+    name: string;
+    phone: string;
+    email: string;
+    business_type: string;
     address: {
-      street: "123 Test Street",
-      city: "New York",
-      state: "NY",
-      zip: "10001",
-    },
+      street: string;
+      city: string;
+      state: string;
+      zip: string;
+    };
     hours: {
-      weekdays: "9:00 AM - 6:00 PM",
-      weekends: "Closed",
-    },
-  },
-  theme: {
-    colors: {
-      primary: "#2563eb",
-      secondary: "#0284c7",
-      accent: "#f59e0b",
-      background: "#ffffff",
-      text: "#0f172a",
-    },
-    style: {
-      layout: "wide",
-      buttonRadius: "rounded",
-      headerStyle: "standard",
-    },
-  },
-  content: {
+      weekdays: string;
+      weekends: string;
+    };
+  };
+}
+
+function formatSiteConfig(siteData: SiteData): SiteConfig {
+  const defaultContent: SiteContent = {
     hero: {
-      title: "Test Website",
-      subtitle: "Default configuration for development",
-      cta: {
-        primary: "Get Started",
-        secondary: "Learn More",
+      title: "",
+      subtitle: "",
+      cta: { primary: "", secondary: "" },
+    },
+    services: [],
+    features: [],
+  };
+
+  const content = siteData.content
+    ? {
+        hero: siteData.content.hero as SiteContent["hero"],
+        services: siteData.content.services as SiteContent["services"],
+        features: siteData.content.features as SiteContent["features"],
+      }
+    : defaultContent;
+
+  return {
+    id: siteData.id,
+    business: {
+      name: siteData.business_profiles.name,
+      phone: siteData.business_profiles.phone,
+      email: siteData.business_profiles.email,
+      businessType: siteData.business_profiles.business_type,
+      address: siteData.business_profiles.address,
+      hours: siteData.business_profiles.hours,
+    },
+    theme: {
+      colors: {
+        primary: "#2563eb",
+        secondary: "#0284c7",
+        accent: "#f59e0b",
+        background: "#ffffff",
+        text: "#0f172a",
+      },
+      style: {
+        layout: "wide",
+        buttonRadius: "rounded",
+        headerStyle: "standard",
       },
     },
-    services: [
-      {
-        title: "Service 1",
-        description: "Description of service 1",
-      },
-      {
-        title: "Service 2",
-        description: "Description of service 2",
-      },
-      {
-        title: "Service 3",
-        description: "Description of service 3",
-      },
-    ],
-    features: [
-      {
-        title: "Feature 1",
-        description: "Description of feature 1",
-      },
-      {
-        title: "Feature 2",
-        description: "Description of feature 2",
-      },
-      {
-        title: "Feature 3",
-        description: "Description of feature 3",
-      },
-      {
-        title: "Feature 4",
-        description: "Description of feature 4",
-      },
-    ],
-  },
-};
+    content,
+  };
+}
 
 export function useSiteConfig() {
   const [config, setConfig] = useState<SiteConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const generationInProgress = useRef(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
     let isSubscribed = true;
 
     const loadConfig = async () => {
-      if (!isSubscribed) return;
+      if (!isSubscribed || generationInProgress.current) return;
 
       try {
-        // Debug element creation (commented out but preserved)
-        /*
-        const debugInfo = document.createElement("div");
-        debugInfo.style.position = "fixed";
-        debugInfo.style.bottom = "0";
-        debugInfo.style.left = "0";
-        debugInfo.style.padding = "1rem";
-        debugInfo.style.background = "rgba(0,0,0,0.8)";
-        debugInfo.style.color = "white";
-        debugInfo.style.zIndex = "9999";
-        debugInfo.style.maxHeight = "200px";
-        debugInfo.style.overflowY = "auto";
-        */
+        setLoading(true);
+        const domain = window.location.hostname;
+        const searchDomain =
+          domain === "localhost" ? "plumber.skaild.com" : domain;
 
-        const hostname = window.location.hostname;
-        const domain =
-          hostname === "localhost"
-            ? "plumber.skaild.com"
-            : `${hostname.split(".")[0]}.skaild.com`;
+        // 1. D'abord, vérifions si nous avons déjà le contenu en cache
+        const cacheKey = `site_config_${searchDomain}`;
+        const cachedConfig = sessionStorage.getItem(cacheKey);
 
-        console.log("Hostname:", hostname);
-        console.log("Domain utilisé:", domain);
-
-        /*
-        debugInfo.innerHTML = `
-          <div>
-            <p>Hostname: ${hostname}</p>
-            <p>Domain: ${domain}</p>
-            <p>Supabase URL: ${
-              process.env.NEXT_PUBLIC_SUPABASE_URL || "Non définie"
-            }</p>
-            <p>Query: sites?domain=eq.${domain}</p>
-          </div>
-        `;
-
-        document.body.appendChild(debugInfo);
-        */
-
-        // Test de connexion Supabase
-        try {
-          const { error: testError } = await supabase
-            .from("sites")
-            .select("count")
-            .limit(1);
-
-          if (testError) {
-            // debugInfo.innerHTML += `<p style="color: red">Erreur de connexion Supabase: ${testError.message}</p>`;
-            throw testError;
-          }
-
-          // debugInfo.innerHTML += `<p style="color: green">Connexion Supabase OK</p>`;
-        } catch (testErr) {
-          // debugInfo.innerHTML += `<p style="color: red">Erreur test Supabase: ${testErr}</p>`;
-          throw testErr;
+        if (cachedConfig) {
+          console.log("📦 Utilisation du contenu en cache");
+          setConfig(JSON.parse(cachedConfig));
+          setLoading(false);
+          return;
         }
 
-        const { data: sites, error: siteError } = await supabase
+        const { data: siteData, error } = await supabase
           .from("sites")
-          .select("*, business_profiles(*)")
-          .eq("domain", domain);
+          .select(
+            `
+            *,
+            business_profiles(*),
+            services!services_site_id_fkey(*),
+            features!features_site_id_fkey(*)
+          `
+          )
+          .eq("domain", searchDomain)
+          .single();
 
-        if (siteError) {
-          // debugInfo.innerHTML += `<p style="color: red">Error: ${siteError.message}</p>`;
-          throw siteError;
+        if (error) throw error;
+
+        // 2. Si le contenu existe déjà dans la base de données, on l'utilise
+        if (siteData.content_generated && siteData.content) {
+          console.log("✅ Contenu existant trouvé dans la base de données");
+          const formattedConfig = formatSiteConfig(siteData);
+          sessionStorage.setItem(cacheKey, JSON.stringify(formattedConfig));
+          setConfig(formattedConfig);
+          setLoading(false);
+          return;
         }
 
-        if (!sites || sites.length === 0) {
-          if (process.env.NODE_ENV === "development") {
-            // debugInfo.innerHTML += `<p style="color: yellow">Using default configuration for development</p>`;
-            setConfig(defaultConfig);
-            setError(null);
-          } else {
-            // debugInfo.innerHTML += `<p style="color: orange">No site found for domain: ${domain}</p>`;
-            throw new Error(
-              `No site configuration found for domain: ${domain}`
-            );
-          }
-        } else {
-          const site = sites[0];
-          // debugInfo.innerHTML += `<p style="color: green">Site loaded successfully (ID: ${site.id})</p>`;
+        // 3. Sinon, on génère le contenu
+        if (!generationInProgress.current) {
+          generationInProgress.current = true;
+          console.log("🔄 Génération du contenu...");
 
-          const formattedConfig: SiteConfig = {
-            id: site.id,
-            business: {
-              name: site.business_profiles?.name || "Business Name",
-              phone:
-                site.business_profiles?.phone || "Contact number not available",
-              email: site.business_profiles?.email || "Email not available",
-              businessType: site.business_profiles?.business_type || "general",
-              address: site.business_profiles?.address || {
-                street: "Street Address",
-                city: "City",
-                state: "State",
-                zip: "ZIP",
-              },
-              hours: site.business_profiles?.hours || {
-                weekdays: "9:00 AM - 5:00 PM",
-                weekends: "Closed",
-              },
-            },
-            theme: {
-              colors: site.theme_config?.colors || defaultConfig.theme.colors,
-              style: site.theme_config?.style || defaultConfig.theme.style,
-            },
-            content: site.content || defaultConfig.content,
+          const content = await generateBusinessContent(
+            siteData.business_profiles.name,
+            siteData.business_profiles.business_type
+          );
+
+          const { error: updateError } = await supabase
+            .from("sites")
+            .update({
+              content,
+              content_generated: true,
+              status: "published",
+            })
+            .eq("id", siteData.id);
+
+          if (updateError) throw updateError;
+
+          const updatedSiteData = {
+            ...siteData,
+            content,
+            content_generated: true,
           };
 
-          // Si le contenu n'est pas personnalisé et qu'on a un business_type
-          if (
-            !site.content?.services ||
-            site.content.services.length < 3 ||
-            !site.content?.features ||
-            site.content.features.length < 4
-          ) {
-            try {
-              console.log("Attempting AI content generation...");
-              const generatedContent = await generateBusinessContent(
-                site.business_profiles?.name || defaultConfig.business.name,
-                site.business_profiles?.business_type || "default"
-              );
+          const formattedConfig = formatSiteConfig(updatedSiteData);
+          sessionStorage.setItem(cacheKey, JSON.stringify(formattedConfig));
 
-              // Préparer le contenu mis à jour en préservant la structure existante
-              const updatedContent = {
-                hero: generatedContent.hero,
-                services: generatedContent.services || [],
-                features: generatedContent.features || [],
-              };
-
-              console.log(
-                "📦 Contenu à sauvegarder:",
-                JSON.stringify(updatedContent, null, 2)
-              );
-
-              // Première étape : mise à jour
-              const { error: updateError } = await supabase
-                .from("sites")
-                .update({
-                  content: updatedContent,
-                })
-                .eq("id", site.id);
-
-              if (updateError) {
-                console.error("❌ Erreur de mise à jour:", updateError);
-                throw updateError;
-              }
-
-              // Deuxième étape : récupération du site mis à jour
-              const { data: updatedSite, error: fetchError } = await supabase
-                .from("sites")
-                .select("*")
-                .eq("id", site.id)
-                .single();
-
-              if (fetchError) {
-                console.error("❌ Erreur de récupération:", fetchError);
-                throw fetchError;
-              }
-
-              // Vérification et mise à jour locale
-              console.log("✅ Site mis à jour:", {
-                id: updatedSite.id,
-                contentSaved: !!updatedSite.content,
-                servicesCount: updatedSite.content?.services?.length || 0,
-                featuresCount: updatedSite.content?.features?.length || 0,
-              });
-
-              formattedConfig.content = updatedContent;
-            } catch (error) {
-              console.error("❌ Erreur lors de la mise à jour:", error);
-            }
+          if (isSubscribed) {
+            setConfig(formattedConfig);
           }
-
-          console.log("Formatted configuration:", formattedConfig);
-
-          setConfig(formattedConfig);
-          setError(null);
         }
       } catch (err) {
         console.error("Error loading site config:", err);
         if (isSubscribed) {
           setError(err instanceof Error ? err : new Error(String(err)));
-          setConfig(null);
         }
       } finally {
+        generationInProgress.current = false;
         if (isSubscribed) {
           setLoading(false);
         }
@@ -292,7 +182,6 @@ export function useSiteConfig() {
     };
 
     loadConfig();
-
     return () => {
       isSubscribed = false;
     };

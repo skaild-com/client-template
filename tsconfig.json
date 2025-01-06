@@ -29,5 +29,13 @@
     ".next/types/**/*.ts",
     "scripts/verify-env.mjs"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
+  "scripts": {
+    "test:generation": "ts-node -P tsconfig.json src/services/__tests__/testGeneration.ts"
+  },
+  "ts-node": {
+    "compilerOptions": {
+      "module": "CommonJS"
+    }
+  }
 }
