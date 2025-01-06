@@ -92,23 +92,33 @@ export function useSiteConfig() {
     const loadConfig = async () => {
       if (!isSubscribed || generationInProgress.current) return;
 
-      const domain = window.location.hostname;
-      const searchDomain = domain;
-      const cacheKey = `site_config_${searchDomain}`;
-
       try {
         setLoading(true);
 
-        // 1. Vérifier le cache
+        // 1. Gérer le domaine Vercel
+        const hostname = window.location.hostname;
+        let searchDomain = hostname;
+
+        // Si c'est un domaine Vercel, chercher le site parent
+        if (hostname.includes(".vercel.app")) {
+          // Extraire le nom du site de l'URL Vercel (ex: outian-marche.vercel.app -> outian-marche)
+          const siteName = hostname.split(".")[0];
+          searchDomain = `${siteName}.skaild.com`;
+          console.log("🔍 Searching for parent site:", searchDomain);
+        }
+
+        const cacheKey = `site_config_${searchDomain}`;
         const cachedConfig = sessionStorage.getItem(cacheKey);
+
         if (cachedConfig) {
+          console.log("📦 Using cached config");
           setConfig(JSON.parse(cachedConfig));
           setLoading(false);
           return;
         }
 
-        // 2. Charger depuis Supabase
-        const { data: siteData, error } = await supabase
+        // 2. Chercher le site dans Supabase
+        const { data: siteData, error: fetchError } = await supabase
           .from("sites")
           .select(
             `
@@ -121,51 +131,20 @@ export function useSiteConfig() {
           .eq("domain", searchDomain)
           .single();
 
-        if (error) throw error;
+        if (fetchError) {
+          if (fetchError.code === "PGRST116") {
+            console.error(`Site not found for domain: ${searchDomain}`);
+            throw new Error(`Site not found for domain: ${searchDomain}`);
+          }
+          throw fetchError;
+        }
 
-        // 3. Utiliser les données existantes, qu'elles soient générées ou non
+        // 3. Formater et mettre en cache
         const formattedConfig = formatSiteConfig(siteData);
         sessionStorage.setItem(cacheKey, JSON.stringify(formattedConfig));
 
         if (isSubscribed) {
           setConfig(formattedConfig);
-          setLoading(false);
-        }
-
-        // 4. Si le contenu n'est pas généré, le générer en arrière-plan
-        if (!siteData.content_generated && !generationInProgress.current) {
-          generationInProgress.current = true;
-
-          try {
-            const content = await generateBusinessContent(
-              siteData.business_profiles.name,
-              siteData.business_profiles.business_type
-            );
-
-            await supabase
-              .from("sites")
-              .update({
-                content,
-                content_generated: true,
-                status: "published",
-              })
-              .eq("id", siteData.id);
-
-            // Mettre à jour le cache et l'état si nécessaire
-            const updatedConfig = {
-              ...formattedConfig,
-              content,
-            };
-            sessionStorage.setItem(cacheKey, JSON.stringify(updatedConfig));
-
-            if (isSubscribed) {
-              setConfig(updatedConfig);
-            }
-          } catch (genError) {
-            console.error("Content generation error:", genError);
-          } finally {
-            generationInProgress.current = false;
-          }
         }
       } catch (err) {
         console.error("Error loading site config:", err);
