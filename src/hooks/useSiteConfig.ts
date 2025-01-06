@@ -155,15 +155,10 @@ export function useSiteConfig() {
               content,
               content_generated: true,
               status: "published",
-              has_services: true,
-              has_features: true,
             })
             .eq("id", siteData.id);
 
-          if (updateError) {
-            console.error("Update error:", updateError);
-            throw updateError;
-          }
+          if (updateError) throw updateError;
 
           if (content.services?.length > 0) {
             const { error: servicesError } = await supabase
@@ -205,8 +200,6 @@ export function useSiteConfig() {
             ...siteData,
             content,
             content_generated: true,
-            has_services: true,
-            has_features: true,
           };
         }
 
