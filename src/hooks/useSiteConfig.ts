@@ -11,6 +11,7 @@ const supabase = createClient(
 );
 
 // Définir le type pour les données du site
+// commit
 interface SiteData {
   id: string;
   content?: Record<string, unknown>;
