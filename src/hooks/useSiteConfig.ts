@@ -139,8 +139,13 @@ export function useSiteConfig() {
           throw fetchError;
         }
 
-        // 2. Si le contenu n'est pas généré, le générer
-        if (!siteData.content_generated) {
+        // 2. Si le contenu n'existe pas, le générer
+        if (
+          !siteData.content ||
+          !siteData.content.hero ||
+          !siteData.content.services ||
+          !siteData.content.features
+        ) {
           console.log("🔄 Génération du contenu...");
           generationInProgress.current = true;
 
