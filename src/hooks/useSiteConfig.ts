@@ -92,29 +92,22 @@ export function useSiteConfig() {
     const loadConfig = async () => {
       if (!isSubscribed || generationInProgress.current) return;
 
-      // Déplacer la déclaration de searchDomain en dehors du try
       const domain = window.location.hostname;
-      const searchDomain =
-        domain === "localhost"
-          ? "plumber.skaild.com"
-          : domain.includes("vercel.app")
-          ? "plumber.skaild.com"
-          : domain;
+      const searchDomain = domain;
+      const cacheKey = `site_config_${searchDomain}`;
 
       try {
         setLoading(true);
 
-        // 1. D'abord, vérifions si nous avons déjà le contenu en cache
-        const cacheKey = `site_config_${searchDomain}`;
+        // 1. Vérifier le cache
         const cachedConfig = sessionStorage.getItem(cacheKey);
-
         if (cachedConfig) {
-          console.log("📦 Utilisation du contenu en cache");
           setConfig(JSON.parse(cachedConfig));
           setLoading(false);
           return;
         }
 
+        // 2. Charger depuis Supabase
         const { data: siteData, error } = await supabase
           .from("sites")
           .select(
@@ -130,61 +123,56 @@ export function useSiteConfig() {
 
         if (error) throw error;
 
-        // 2. Si le contenu existe déjà dans la base de données, on l'utilise
-        if (siteData.content_generated && siteData.content) {
-          console.log("✅ Contenu existant trouvé dans la base de données");
-          const formattedConfig = formatSiteConfig(siteData);
-          sessionStorage.setItem(cacheKey, JSON.stringify(formattedConfig));
+        // 3. Utiliser les données existantes, qu'elles soient générées ou non
+        const formattedConfig = formatSiteConfig(siteData);
+        sessionStorage.setItem(cacheKey, JSON.stringify(formattedConfig));
+
+        if (isSubscribed) {
           setConfig(formattedConfig);
           setLoading(false);
-          return;
         }
 
-        // 3. Sinon, on génère le contenu
-        if (!generationInProgress.current) {
+        // 4. Si le contenu n'est pas généré, le générer en arrière-plan
+        if (!siteData.content_generated && !generationInProgress.current) {
           generationInProgress.current = true;
-          console.log("🔄 Génération du contenu...");
 
-          const content = await generateBusinessContent(
-            siteData.business_profiles.name,
-            siteData.business_profiles.business_type
-          );
+          try {
+            const content = await generateBusinessContent(
+              siteData.business_profiles.name,
+              siteData.business_profiles.business_type
+            );
 
-          const { error: updateError } = await supabase
-            .from("sites")
-            .update({
+            await supabase
+              .from("sites")
+              .update({
+                content,
+                content_generated: true,
+                status: "published",
+              })
+              .eq("id", siteData.id);
+
+            // Mettre à jour le cache et l'état si nécessaire
+            const updatedConfig = {
+              ...formattedConfig,
               content,
-              content_generated: true,
-              status: "published",
-            })
-            .eq("id", siteData.id);
+            };
+            sessionStorage.setItem(cacheKey, JSON.stringify(updatedConfig));
 
-          if (updateError) throw updateError;
-
-          const updatedSiteData = {
-            ...siteData,
-            content,
-            content_generated: true,
-          };
-
-          const formattedConfig = formatSiteConfig(updatedSiteData);
-          sessionStorage.setItem(cacheKey, JSON.stringify(formattedConfig));
-
-          if (isSubscribed) {
-            setConfig(formattedConfig);
+            if (isSubscribed) {
+              setConfig(updatedConfig);
+            }
+          } catch (genError) {
+            console.error("Content generation error:", genError);
+          } finally {
+            generationInProgress.current = false;
           }
         }
       } catch (err) {
-        console.error("Error loading site config:", {
-          error: err,
-          domain: window.location.hostname,
-          searchDomain: searchDomain,
-        });
+        console.error("Error loading site config:", err);
         if (isSubscribed) {
           setError(err instanceof Error ? err : new Error(String(err)));
         }
       } finally {
-        generationInProgress.current = false;
         if (isSubscribed) {
           setLoading(false);
         }
