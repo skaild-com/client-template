@@ -92,17 +92,17 @@ export function useSiteConfig() {
     const loadConfig = async () => {
       if (!isSubscribed || generationInProgress.current) return;
 
+      // Déplacer la déclaration de searchDomain en dehors du try
+      const domain = window.location.hostname;
+      const searchDomain =
+        domain === "localhost"
+          ? "plumber.skaild.com"
+          : domain.includes("vercel.app")
+          ? "plumber.skaild.com"
+          : domain;
+
       try {
         setLoading(true);
-        const domain = window.location.hostname;
-
-        // Add support for Vercel preview domains
-        const searchDomain =
-          domain === "localhost"
-            ? "plumber.skaild.com"
-            : domain.includes("vercel.app")
-            ? "plumber.skaild.com" // Use the same fallback for Vercel deployments
-            : domain;
 
         // 1. D'abord, vérifions si nous avons déjà le contenu en cache
         const cacheKey = `site_config_${searchDomain}`;
