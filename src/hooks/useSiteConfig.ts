@@ -163,6 +163,34 @@ export function useSiteConfig() {
             throw updateError;
           }
 
+          if (content.services?.length > 0) {
+            const { error: servicesError } = await supabase
+              .from("services")
+              .insert(
+                content.services.map((service) => ({
+                  site_id: siteData.id,
+                  name: service.title,
+                  description: service.description,
+                  icon: service.icon || "default",
+                }))
+              );
+            if (servicesError) throw servicesError;
+          }
+
+          if (content.features?.length > 0) {
+            const { error: featuresError } = await supabase
+              .from("features")
+              .insert(
+                content.features.map((feature) => ({
+                  site_id: siteData.id,
+                  title: feature.title,
+                  description: feature.description,
+                  icon: feature.icon || "default",
+                }))
+              );
+            if (featuresError) throw featuresError;
+          }
+
           console.log("🎨 Content generated:", {
             heroTitle: content.hero.title,
             servicesCount: content.services.length,
