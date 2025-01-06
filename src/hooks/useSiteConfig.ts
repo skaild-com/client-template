@@ -106,7 +106,7 @@ export function useSiteConfig() {
         }
 
         const cacheKey = `site_config_${searchDomain}`;
-        const cachedConfig = sessionStorage.getItem(cacheKey);
+        const cachedConfig = localStorage.getItem(cacheKey);
 
         if (cachedConfig) {
           console.log("📦 Using cached config");
@@ -210,7 +210,7 @@ export function useSiteConfig() {
 
         // 3. Formater et mettre en cache
         const formattedConfig = formatSiteConfig(siteData);
-        sessionStorage.setItem(cacheKey, JSON.stringify(formattedConfig));
+        localStorage.setItem(cacheKey, JSON.stringify(formattedConfig));
 
         if (isSubscribed) {
           setConfig(formattedConfig);
